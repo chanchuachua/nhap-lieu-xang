@@ -209,10 +209,18 @@
         let historyData = [];
 
         window.onload = function() {
+            // Tải lại tài khoản
             if (localStorage.getItem("savedEmail")) {
                 document.getElementById('email').value = localStorage.getItem("savedEmail");
                 document.getElementById('pass').value = localStorage.getItem("savedPass");
             }
+            // Tải lại toàn bộ dữ liệu Ghi nhớ của form
+            document.querySelectorAll('.data-input').forEach(input => {
+                const savedVal = localStorage.getItem("draft_" + input.id);
+                if (savedVal !== null) {
+                    input.value = savedVal;
+                }
+            });
         };
 
         function togglePassword() {
@@ -228,9 +236,18 @@
                 document.getElementById('history-view').classList.add('hidden');
                 
                 if(currentEditId) {
-                    currentEditId = null;
+                    currentEditId = null; // Hủy chế độ Sửa
                     document.getElementById('btn-save').innerText = "Lưu Phiếu Mới";
-                    document.querySelectorAll('.data-input').forEach(input => input.value = '');
+                    
+                    // Phục hồi lại những ô đã Ghi nhớ thay vì xóa trắng tất cả
+                    document.querySelectorAll('.data-input').forEach(input => {
+                        const cb = document.getElementById('rem_' + input.id);
+                        if (cb && cb.checked) {
+                            input.value = localStorage.getItem("draft_" + input.id) || '';
+                        } else {
+                            input.value = '';
+                        }
+                    });
                 }
             } else {
                 document.getElementById('tab-history').classList.add('active');
@@ -376,10 +393,14 @@
                     document.getElementById('btn-save').innerText = "Lưu Phiếu Mới";
                 }
 
+                // Xử lý Lưu vào bộ nhớ máy và Xóa trắng
                 document.querySelectorAll('.data-input').forEach(input => {
                     const cb = document.getElementById('rem_' + input.id);
-                    if (!cb || !cb.checked) {
-                        input.value = '';
+                    if (cb && cb.checked) {
+                        localStorage.setItem("draft_" + input.id, input.value); // Ghi nhớ vĩnh viễn
+                    } else {
+                        localStorage.removeItem("draft_" + input.id); // Xóa khỏi bộ nhớ
+                        input.value = ''; // Xóa trên màn hình
                     }
                 });
                 
