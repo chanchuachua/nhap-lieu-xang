@@ -17,6 +17,8 @@
         button { padding: 14px; cursor: pointer; width: 100%; background: #1a73e8; color: white; border: none; font-size: 16px; font-weight: 600; border-radius: 8px; margin-top: 10px; transition: 0.2s; }
         button:active { background: #1557b0; }
         button.btn-logout { background: #fce8e6; color: #d93025; width: auto; padding: 8px 12px; font-size: 13px; font-weight: bold; border-radius: 6px; margin: 0; }
+        button.btn-signup { background: #28a745; margin-top: 12px; }
+        button.btn-signup:active { background: #218838; }
         
         label.title { font-weight: 600; font-size: 14px; margin-top: 12px; display: block; margin-bottom: 6px; color: #444; }
         .req { color: #dc3545; font-weight: bold; }
@@ -31,7 +33,6 @@
         input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: #1a73e8; }
         .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; padding: 5px; user-select: none; }
         
-        /* Chữ quên mật khẩu */
         .forgot-link { display: block; text-align: center; margin-top: 15px; color: #1a73e8; text-decoration: none; font-size: 14px; font-weight: 500; }
         
         h2 { font-size: 18px; text-align: center; margin-top: 5px; margin-bottom: 20px; color: #222; }
@@ -66,6 +67,7 @@
                 <input type="checkbox" id="rem_login" checked> Nhớ tài khoản
             </label>
             <button onclick="login()">Đăng Nhập</button>
+            <button class="btn-signup" onclick="signup()">Tạo Tài Khoản Mới</button>
             <a href="#" class="forgot-link" onclick="forgotPassword()">Quên mật khẩu?</a>
         </div>
     </div>
@@ -229,7 +231,6 @@
         let currentEditId = null;
         let historyData = [];
 
-        // Lắng nghe sự kiện khôi phục mật khẩu từ đường link trong Email
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
             if (event === 'PASSWORD_RECOVERY') {
                 document.getElementById('login-form').classList.add('hidden');
@@ -256,14 +257,33 @@
             passInput.type = (passInput.type === "password") ? "text" : "password";
         }
 
+        async function signup() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+
+            if (!email || pass.length < 6) {
+                alert("Vui lòng điền Email và Mật khẩu (tối thiểu 6 ký tự) để đăng ký!");
+                return;
+            }
+
+            const { data, error } = await supabaseClient.auth.signUp({
+                email: email, password: pass
+            });
+
+            if (error) {
+                alert('Lỗi đăng ký: ' + error.message);
+            } else {
+                alert('Tạo tài khoản thành công! Nhấn OK rồi bấm tiếp Đăng Nhập nhé.');
+            }
+        }
+
         async function forgotPassword() {
             const email = document.getElementById('email').value;
             if (!email) {
-                alert("Vui lòng nhập Email của bạn vào ô trên trước khi bấm Quên mật khẩu!");
+                alert("Vui lòng nhập Email vào ô trên trước khi bấm Quên mật khẩu!");
                 return;
             }
             
-            // Lấy URL hiện tại để Supabase biết đường quay lại sau khi click link email
             const redirectUrl = window.location.origin + window.location.pathname;
             const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
                 redirectTo: redirectUrl,
@@ -272,7 +292,7 @@
             if (error) {
                 alert('Lỗi: ' + error.message);
             } else {
-                alert('Hệ thống đã gửi link khôi phục. Vui lòng kiểm tra Email (cả hộp thư rác)!');
+                alert('Hệ thống đã gửi link khôi phục. Vui lòng kiểm tra Email!');
             }
         }
 
@@ -287,7 +307,7 @@
             if (error) {
                 alert('Lỗi cập nhật: ' + error.message);
             } else {
-                alert('Đổi mật khẩu thành công! Bạn đã tự động đăng nhập vào hệ thống.');
+                alert('Đổi mật khẩu thành công! Tự động đăng nhập vào hệ thống.');
                 document.getElementById('reset-form').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 switchTab('form');
