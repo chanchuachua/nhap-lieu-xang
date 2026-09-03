@@ -9,9 +9,13 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 12px; max-width: 550px; margin: auto; background-color: #f0f2f5; color: #333; }
         .hidden { display: none !important; }
         .group { background: #fff; border: 1px solid #e1e4e8; padding: 16px; margin-bottom: 16px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
-        .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; }
-        .group-header h3 { margin: 0; color: #1a73e8; font-size: 17px; }
         
+        .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; }
+        .group-header h3 { margin: 0; color: #1a73e8; font-size: 17px; transition: color 0.3s; }
+        
+        /* Đổi màu tiêu đề sang vàng khi ở chế độ sửa */
+        .group-header.edit-mode h3 { color: #d97706; } 
+
         button { padding: 14px; cursor: pointer; width: 100%; background: #1a73e8; color: white; border: none; font-size: 16px; font-weight: 600; border-radius: 8px; margin-top: 10px; transition: 0.2s; }
         button:active { background: #1557b0; }
         button.btn-logout { background: #fce8e6; color: #d93025; width: auto; padding: 8px 12px; font-size: 13px; font-weight: bold; border-radius: 6px; margin: 0; }
@@ -32,13 +36,16 @@
 
         /* CSS cho Tab Navigation và Lịch sử */
         .nav-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-        .nav-tabs button { margin-top: 0; padding: 10px; background: #e0e0e0; color: #333; }
+        .nav-tabs button { margin-top: 0; padding: 10px; background: #e0e0e0; color: #333; transition: 0.3s; }
         .nav-tabs button.active { background: #1a73e8; color: white; }
         
-        .history-item { padding: 12px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff; cursor: pointer; border-left: 4px solid #1a73e8; }
+        .history-item { padding: 12px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff; cursor: pointer; border-left: 4px solid #1a73e8; position: relative; }
         .history-item:active { background: #f0f2f5; }
         .history-title { font-weight: bold; color: #1a73e8; margin-bottom: 4px; display: block;}
         .history-desc { font-size: 14px; color: #555; }
+        
+        /* CSS cho nút xóa */
+        .btn-delete { color: #dc3545; font-size: 16px; cursor: pointer; padding: 5px; user-select: none; }
     </style>
 </head>
 <body>
@@ -87,7 +94,7 @@
         <!-- Chế độ Nhập liệu / Cập nhật -->
         <div id="data-form">
             <div class="group">
-                <div class="group-header">
+                <div class="group-header edit-target">
                     <h3>1. Người đi & Phương tiện</h3>
                     <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
                 </div>
@@ -114,7 +121,7 @@
             </div>
 
             <div class="group">
-                <div class="group-header" style="border:none; padding-bottom: 0;">
+                <div class="group-header edit-target" style="border:none; padding-bottom: 0;">
                     <h3>2. Thông tin cấp nhiên liệu</h3>
                 </div>
                 <label class="title">Số phiếu cấp NL: <span class="req">*</span></label>
@@ -135,7 +142,7 @@
             </div>
 
             <div class="group">
-                <div class="group-header" style="border:none; padding-bottom: 0;">
+                <div class="group-header edit-target" style="border:none; padding-bottom: 0;">
                     <h3>3. Nội dung công tác</h3>
                 </div>
                 <label class="title">Ngày đi công tác: <span class="req">*</span></label>
@@ -176,7 +183,7 @@
             </div>
 
             <div class="group">
-                <div class="group-header" style="border:none; padding-bottom: 0;">
+                <div class="group-header edit-target" style="border:none; padding-bottom: 0;">
                     <h3>4. Quãng đường (Km)</h3>
                 </div>
                 <label class="title">Số km công tơ - Đi:</label>
@@ -227,6 +234,9 @@
         }
 
         function switchTab(tab) {
+            // Xóa màu vàng ở các tiêu đề khi chuyển tab
+            document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
+
             if(tab === 'form') {
                 document.getElementById('tab-form').classList.add('active');
                 document.getElementById('tab-history').classList.remove('active');
@@ -304,7 +314,10 @@
             data.forEach((item, index) => {
                 container.innerHTML += `
                     <div class="history-item" onclick="editRecord(${index})">
-                        <span class="history-title">Ngày đi: ${item.ngay_di || 'Trống'}</span>
+                        <div style="display:flex; justify-content: space-between; align-items: center;">
+                            <span class="history-title">Ngày đi: ${item.ngay_di || 'Trống'}</span>
+                            <span class="btn-delete" onclick="deleteRecord(event, ${item.id})">❌</span>
+                        </div>
                         <div class="history-desc">
                             <strong>Nội dung:</strong> ${item.noi_dung || 'Trống'} <br>
                             <strong>Nhân viên:</strong> ${item.ten_nv} (${item.ma_nv})
@@ -312,6 +325,19 @@
                     </div>
                 `;
             });
+        }
+
+        async function deleteRecord(event, id) {
+            event.stopPropagation(); // Ngăn việc click nhầm vào chế độ sửa
+            if(confirm("Bạn có chắc chắn muốn xóa vĩnh viễn dòng dữ liệu này không?")) {
+                const { error } = await supabaseClient.from('du_lieu').delete().eq('id', id);
+                if(error) {
+                    alert('Lỗi khi xóa: ' + error.message);
+                } else {
+                    alert('Đã xóa dữ liệu thành công!');
+                    loadHistory(); // Tải lại danh sách ngay lập tức
+                }
+            }
         }
 
         function editRecord(index) {
@@ -338,8 +364,13 @@
 
             document.getElementById('btn-save').innerText = "Cập Nhật Dữ Liệu";
             
-            document.getElementById('tab-form').classList.add('active');
+            // Xóa màu xanh ở 2 tab
+            document.getElementById('tab-form').classList.remove('active');
             document.getElementById('tab-history').classList.remove('active');
+            
+            // Chuyển 4 mục tiêu đề sang màu vàng
+            document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
+
             document.getElementById('data-form').classList.remove('hidden');
             document.getElementById('history-view').classList.add('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -388,6 +419,10 @@
                 if(currentEditId) {
                     currentEditId = null;
                     document.getElementById('btn-save').innerText = "Lưu Phiếu Mới";
+                    
+                    // Trả lại màu xanh cho tab Nhập mới và tiêu đề
+                    document.getElementById('tab-form').classList.add('active');
+                    document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
                 }
 
                 document.querySelectorAll('.data-input').forEach(input => {
