@@ -12,8 +12,6 @@
         
         .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; }
         .group-header h3 { margin: 0; color: #1a73e8; font-size: 17px; transition: color 0.3s; }
-        
-        /* Đổi màu tiêu đề sang vàng khi ở chế độ sửa */
         .group-header.edit-mode h3 { color: #d97706; } 
 
         button { padding: 14px; cursor: pointer; width: 100%; background: #1a73e8; color: white; border: none; font-size: 16px; font-weight: 600; border-radius: 8px; margin-top: 10px; transition: 0.2s; }
@@ -32,9 +30,11 @@
         .remember-cb { font-size: 14px; color: #555; display: flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; padding: 10px 0; user-select: none; }
         input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: #1a73e8; }
         .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; padding: 5px; user-select: none; }
+        
+        /* Chữ quên mật khẩu */
+        .forgot-link { display: block; text-align: center; margin-top: 15px; color: #1a73e8; text-decoration: none; font-size: 14px; font-weight: 500; }
+        
         h2 { font-size: 18px; text-align: center; margin-top: 5px; margin-bottom: 20px; color: #222; }
-
-        /* CSS cho Tab Navigation và Lịch sử */
         .nav-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
         .nav-tabs button { margin-top: 0; padding: 10px; background: #e0e0e0; color: #333; transition: 0.3s; }
         .nav-tabs button.active { background: #1a73e8; color: white; }
@@ -43,8 +43,6 @@
         .history-item:active { background: #f0f2f5; }
         .history-title { font-weight: bold; color: #1a73e8; margin-bottom: 4px; display: block;}
         .history-desc { font-size: 14px; color: #555; }
-        
-        /* CSS cho nút xóa */
         .btn-delete { color: #dc3545; font-size: 16px; cursor: pointer; padding: 5px; user-select: none; }
     </style>
 </head>
@@ -62,12 +60,28 @@
             </div>
             <div class="input-wrapper">
                 <input type="password" id="pass" placeholder="Mật khẩu">
-                <span class="toggle-pw" onclick="togglePassword()">👁️</span>
+                <span class="toggle-pw" onclick="togglePassword('pass')">👁️</span>
             </div>
             <label class="remember-cb" style="margin-top: 10px; justify-content: flex-start;">
                 <input type="checkbox" id="rem_login" checked> Nhớ tài khoản
             </label>
             <button onclick="login()">Đăng Nhập</button>
+            <a href="#" class="forgot-link" onclick="forgotPassword()">Quên mật khẩu?</a>
+        </div>
+    </div>
+
+    <!-- Khôi phục mật khẩu -->
+    <div id="reset-form" class="hidden">
+        <div class="group">
+            <div class="group-header" style="border:none; padding-bottom: 5px;">
+                <h3>Tạo Mật Khẩu Mới</h3>
+            </div>
+            <p style="font-size: 14px; color: #555; margin-top: 0;">Bạn đang trong chế độ khôi phục tài khoản.</p>
+            <div class="input-wrapper">
+                <input type="password" id="new_pass" placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)">
+                <span class="toggle-pw" onclick="togglePassword('new_pass')">👁️</span>
+            </div>
+            <button onclick="updatePassword()">Cập Nhật Mật Khẩu</button>
         </div>
     </div>
 
@@ -215,6 +229,15 @@
         let currentEditId = null;
         let historyData = [];
 
+        // Lắng nghe sự kiện khôi phục mật khẩu từ đường link trong Email
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+                document.getElementById('reset-form').classList.remove('hidden');
+            }
+        });
+
         window.onload = function() {
             if (localStorage.getItem("savedEmail")) {
                 document.getElementById('email').value = localStorage.getItem("savedEmail");
@@ -228,13 +251,50 @@
             });
         };
 
-        function togglePassword() {
-            const passInput = document.getElementById('pass');
+        function togglePassword(inputId) {
+            const passInput = document.getElementById(inputId);
             passInput.type = (passInput.type === "password") ? "text" : "password";
         }
 
+        async function forgotPassword() {
+            const email = document.getElementById('email').value;
+            if (!email) {
+                alert("Vui lòng nhập Email của bạn vào ô trên trước khi bấm Quên mật khẩu!");
+                return;
+            }
+            
+            // Lấy URL hiện tại để Supabase biết đường quay lại sau khi click link email
+            const redirectUrl = window.location.origin + window.location.pathname;
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                redirectTo: redirectUrl,
+            });
+
+            if (error) {
+                alert('Lỗi: ' + error.message);
+            } else {
+                alert('Hệ thống đã gửi link khôi phục. Vui lòng kiểm tra Email (cả hộp thư rác)!');
+            }
+        }
+
+        async function updatePassword() {
+            const newPass = document.getElementById('new_pass').value;
+            if (newPass.length < 6) {
+                alert('Mật khẩu mới phải có ít nhất 6 ký tự!');
+                return;
+            }
+            
+            const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+            if (error) {
+                alert('Lỗi cập nhật: ' + error.message);
+            } else {
+                alert('Đổi mật khẩu thành công! Bạn đã tự động đăng nhập vào hệ thống.');
+                document.getElementById('reset-form').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                switchTab('form');
+            }
+        }
+
         function switchTab(tab) {
-            // Xóa màu vàng ở các tiêu đề khi chuyển tab
             document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
 
             if(tab === 'form') {
@@ -279,7 +339,7 @@
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
 
             if (error) {
-                alert('Lỗi đăng nhập: ' + error.message);
+                alert('Lỗi đăng nhập: Vui lòng kiểm tra lại Email hoặc Mật khẩu.');
             } else {
                 if (remember) {
                     localStorage.setItem("savedEmail", email);
@@ -328,14 +388,14 @@
         }
 
         async function deleteRecord(event, id) {
-            event.stopPropagation(); // Ngăn việc click nhầm vào chế độ sửa
+            event.stopPropagation();
             if(confirm("Bạn có chắc chắn muốn xóa vĩnh viễn dòng dữ liệu này không?")) {
                 const { error } = await supabaseClient.from('du_lieu').delete().eq('id', id);
                 if(error) {
                     alert('Lỗi khi xóa: ' + error.message);
                 } else {
                     alert('Đã xóa dữ liệu thành công!');
-                    loadHistory(); // Tải lại danh sách ngay lập tức
+                    loadHistory();
                 }
             }
         }
@@ -364,11 +424,9 @@
 
             document.getElementById('btn-save').innerText = "Cập Nhật Dữ Liệu";
             
-            // Xóa màu xanh ở 2 tab
             document.getElementById('tab-form').classList.remove('active');
             document.getElementById('tab-history').classList.remove('active');
             
-            // Chuyển 4 mục tiêu đề sang màu vàng
             document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
 
             document.getElementById('data-form').classList.remove('hidden');
@@ -420,7 +478,6 @@
                     currentEditId = null;
                     document.getElementById('btn-save').innerText = "Lưu Phiếu Mới";
                     
-                    // Trả lại màu xanh cho tab Nhập mới và tiêu đề
                     document.getElementById('tab-form').classList.add('active');
                     document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
                 }
