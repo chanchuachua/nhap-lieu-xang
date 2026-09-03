@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Người Sở Hữu: Chan Canh Chua (C3)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Tối ưu tổng thể cho di động */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 12px; max-width: 550px; margin: auto; background-color: #f0f2f5; color: #333; }
+        .hidden { display: none; }
+        
+        /* Giao diện dạng thẻ (Card) */
+        .group { background: #fff; border: 1px solid #e1e4e8; padding: 16px; margin-bottom: 16px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+        
+        /* Xử lý vỡ layout cho các tiêu đề trên màn hình hẹp */
+        .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; }
+        .group-header h3 { margin: 0; color: #1a73e8; font-size: 17px; }
+        
+        /* Nút bấm (Tăng kích thước vùng chạm) */
+        button { padding: 14px; cursor: pointer; width: 100%; background: #1a73e8; color: white; border: none; font-size: 16px; font-weight: 600; border-radius: 8px; margin-top: 10px; transition: 0.2s; }
+        button:active { background: #1557b0; }
+        button.btn-logout { background: #fce8e6; color: #d93025; width: auto; padding: 8px 12px; font-size: 13px; font-weight: bold; border-radius: 6px; margin: 0; }
+        
+        /* Nhãn tiêu đề */
+        label.title { font-weight: 600; font-size: 14px; margin-top: 12px; display: block; margin-bottom: 6px; color: #444; }
+        .req { color: #dc3545; font-weight: bold; }
+        
+        /* Bố cục hàng nhập liệu ngang */
+        .input-row { display: flex; align-items: center; gap: 12px; }
+        .input-wrapper { flex: 1; position: relative; }
+        
+        /* Ô nhập liệu (Font size 16px để chống Auto-Zoom trên iOS) */
+        input:not([type="checkbox"]) { width: 100%; padding: 12px; box-sizing: border-box; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; background-color: #fafafa; }
+        input:not([type="checkbox"]):focus { outline: none; border-color: #1a73e8; background-color: #fff; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+        
+        /* Ô tích "Ghi nhớ" (Tăng vùng chạm ngón tay) */
+        .remember-cb { font-size: 14px; color: #555; display: flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; padding: 10px 0; user-select: none; }
+        input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: #1a73e8; }
+        
+        /* Nút con mắt xem mật khẩu */
+        .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; padding: 5px; user-select: none; }
+        
+        h2 { font-size: 18px; text-align: center; margin-top: 5px; margin-bottom: 20px; color: #222; }
+    </style>
+</head>
+<body>
+    <h2>Người Sở Hữu: Chan Canh Chua (C3)</h2>
+    
+    <!-- Giao diện đăng nhập -->
+    <div id="login-form">
+        <div class="group">
+            <div class="group-header" style="border:none; padding-bottom: 5px;">
+                <h3>Đăng Nhập Hệ Thống</h3>
+            </div>
+            
+            <div class="input-wrapper" style="margin-bottom: 12px;">
+                <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
+            </div>
+            
+            <div class="input-wrapper">
+                <input type="password" id="pass" placeholder="Mật khẩu (Ít nhất 6 ký tự)">
+                <span class="toggle-pw" onclick="togglePassword()">👁️</span>
+            </div>
+
+            <label class="remember-cb" style="margin-top: 10px; justify-content: flex-start;">
+                <input type="checkbox" id="rem_login" checked> Nhớ tài khoản
+            </label>
+
+            <button onclick="login()">Đăng Nhập</button>
+        </div>
+    </div>
+
+    <!-- Giao diện nhập liệu -->
+    <div id="data-form" class="hidden">
+        
+        <div class="group">
+            <div class="group-header">
+                <h3>1. Người đi & Phương tiện</h3>
+                <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
+            </div>
+            
+            <label class="title">Mã nhân viên: <span class="req">*</span></label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="text" id="ma_nv" class="data-input" placeholder="VD: 34340"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_ma_nv" checked> Ghi nhớ</label>
+            </div>
+
+            <label class="title">Họ và tên người đi: <span class="req">*</span></label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="text" id="ten_nv" class="data-input" placeholder="VD: Võ Xuân Toàn"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_ten_nv" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Đơn vị: <span class="req">*</span></label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="text" id="don_vi" class="data-input" placeholder="VD: Kinh doanh"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_don_vi" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Biển số xe: <span class="req">*</span></label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="text" id="bien_so" class="data-input" placeholder="VD: 66L4-003.78"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_bien_so" checked> Ghi nhớ</label>
+            </div>
+        </div>
+
+        <div class="group">
+            <div class="group-header" style="border:none; padding-bottom: 0;">
+                <h3>2. Thông tin cấp nhiên liệu</h3>
+            </div>
+            
+            <label class="title">Số phiếu cấp NL: <span class="req">*</span></label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="text" id="so_phieu" class="data-input" placeholder="Nhập số phiếu"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_so_phieu" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Ngày cấp NL: <span class="req">*</span></label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="date" id="ngay_cap" class="data-input"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_ngay_cap" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Số lít cấp: <span class="req">*</span></label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="number" step="0.1" id="lit_cap" class="data-input" placeholder="VD: 2"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_lit_cap" checked> Ghi nhớ</label>
+            </div>
+        </div>
+
+        <div class="group">
+            <div class="group-header" style="border:none; padding-bottom: 0;">
+                <h3>3. Nội dung công tác</h3>
+            </div>
+            
+            <label class="title">Ngày đi công tác: <span class="req">*</span></label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="date" id="ngay_di" class="data-input"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_ngay_di" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Nơi đi: <span class="req">*</span></label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="text" id="noi_di" class="data-input" placeholder="Nơi đi"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_noi_di" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Nơi đến: <span class="req">*</span></label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="text" id="noi_den" class="data-input" placeholder="Nơi đến"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_noi_den" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Nội dung công tác: <span class="req">*</span></label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="text" id="noi_dung" class="data-input" placeholder="Mô tả công việc"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_noi_dung" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Số Lệnh Công Tác (LCT):</label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="text" id="so_lct" class="data-input" placeholder="Số LCT"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_so_lct" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Số Phiếu Công Tác (PCT):</label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="text" id="so_pct" class="data-input" placeholder="Số PCT"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_so_pct" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Số Phiếu Thao Tác (PTT):</label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="text" id="so_ptt" class="data-input" placeholder="Số PTT"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_so_ptt" checked> Ghi nhớ</label>
+            </div>
+        </div>
+
+        <div class="group">
+            <div class="group-header" style="border:none; padding-bottom: 0;">
+                <h3>4. Quãng đường (Km)</h3>
+            </div>
+            
+            <label class="title">Số km công tơ - Đi:</label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="number" id="km_di" class="data-input" placeholder="Số lúc đi"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_km_di" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Số km công tơ - Về:</label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="number" id="km_ve" class="data-input" placeholder="Số lúc về"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_km_ve" checked> Ghi nhớ</label>
+            </div>
+            
+            <label class="title">Số km hiện trường:</label>
+            <div class="input-row">
+                <div class="input-wrapper"><input type="number" id="km_ht" class="data-input" placeholder="Km di chuyển tại chỗ"></div>
+                <label class="remember-cb"><input type="checkbox" id="rem_km_ht" checked> Ghi nhớ</label>
+            </div>
+        </div>
+
+        <button onclick="saveData()">Lưu Phiếu</button>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://fmljnuhqcybguwevlmia.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_58O7qBE7jTdCxveWzKjttw_d60MBwrr';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        window.onload = function() {
+            if (localStorage.getItem("savedEmail")) {
+                document.getElementById('email').value = localStorage.getItem("savedEmail");
+                document.getElementById('pass').value = localStorage.getItem("savedPass");
+            }
+        };
+
+        function togglePassword() {
+            const passInput = document.getElementById('pass');
+            if (passInput.type === "password") {
+                passInput.type = "text";
+            } else {
+                passInput.type = "password";
+            }
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('data-form').classList.add('hidden');
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            const remember = document.getElementById('rem_login').checked;
+
+            const { error } = await supabaseClient.auth.signInWithPassword({
+                email: email, password: pass
+            });
+
+            if (error) {
+                alert('Lỗi đăng nhập: ' + error.message);
+            } else {
+                if (remember) {
+                    localStorage.setItem("savedEmail", email);
+                    localStorage.setItem("savedPass", pass);
+                } else {
+                    localStorage.removeItem("savedEmail");
+                    localStorage.removeItem("savedPass");
+                }
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('data-form').classList.remove('hidden');
+            }
+        }
+
+        async function saveData() {
+            const payload = {
+                ma_nv: document.getElementById('ma_nv').value,
+                ten_nv: document.getElementById('ten_nv').value,
+                don_vi: document.getElementById('don_vi').value,
+                bien_so: document.getElementById('bien_so').value,
+                so_phieu: document.getElementById('so_phieu').value,
+                ngay_cap: document.getElementById('ngay_cap').value,
+                lit_cap: document.getElementById('lit_cap').value,
+                ngay_di: document.getElementById('ngay_di').value,
+                noi_di: document.getElementById('noi_di').value,
+                noi_den: document.getElementById('noi_den').value,
+                noi_dung: document.getElementById('noi_dung').value,
+                so_lct: document.getElementById('so_lct').value,
+                so_pct: document.getElementById('so_pct').value,
+                so_ptt: document.getElementById('so_ptt').value,
+                km_di: document.getElementById('km_di').value,
+                km_ve: document.getElementById('km_ve').value,
+                km_ht: document.getElementById('km_ht').value
+            };
+
+            // Kiểm tra ràng buộc
+            if (!payload.ma_nv || !payload.ten_nv || !payload.don_vi || !payload.bien_so || 
+                !payload.so_phieu || !payload.ngay_cap || !payload.lit_cap ||
+                !payload.ngay_di || !payload.noi_di || !payload.noi_den || !payload.noi_dung) {
+                alert("Lỗi: Vui lòng điền đầy đủ thông tin vào các ô có dấu * màu đỏ!");
+                return;
+            }
+
+            const { error } = await supabaseClient.from('du_lieu').insert([payload]);
+
+            if (error) {
+                alert('Lỗi khi lưu: ' + error.message);
+            } else {
+                alert('Thành công! Dữ liệu đã được lưu.');
+                
+                // Dọn dẹp form dựa trên thiết lập "Ghi nhớ"
+                document.querySelectorAll('.data-input').forEach(input => {
+                    const cb = document.getElementById('rem_' + input.id);
+                    if (!cb || !cb.checked) {
+                        input.value = '';
+                    }
+                });
+                
+                // Cuộn tự động lên đầu sau khi lưu để nhập người tiếp theo dễ hơn
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    </script>
+</body>
+</html>
