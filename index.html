@@ -12,7 +12,11 @@
         
         .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; }
         .group-header h3 { margin: 0; color: #1a73e8; font-size: 17px; transition: color 0.3s; }
+        
+        /* Đổi màu tiêu đề và ô ghi nhớ sang vàng khi ở chế độ sửa */
         .group-header.edit-mode h3 { color: #d97706; } 
+        .remember-cb.edit-mode { color: #d97706; font-weight: 600; }
+        .remember-cb.edit-mode input[type="checkbox"] { accent-color: #d97706; }
 
         button { padding: 14px; cursor: pointer; width: 100%; background: #1a73e8; color: white; border: none; font-size: 16px; font-weight: 600; border-radius: 8px; margin-top: 10px; transition: 0.2s; }
         button:active { background: #1557b0; }
@@ -29,8 +33,8 @@
         input:not([type="checkbox"]) { width: 100%; padding: 12px; box-sizing: border-box; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; background-color: #fafafa; }
         input:not([type="checkbox"]):focus { outline: none; border-color: #1a73e8; background-color: #fff; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
         
-        .remember-cb { font-size: 14px; color: #555; display: flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; padding: 10px 0; user-select: none; }
-        input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: #1a73e8; }
+        .remember-cb { font-size: 14px; color: #555; display: flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; padding: 10px 0; user-select: none; transition: 0.3s; }
+        input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: #1a73e8; transition: 0.3s; }
         .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; padding: 5px; user-select: none; }
         
         .forgot-link { display: block; text-align: center; margin-top: 15px; color: #1a73e8; text-decoration: none; font-size: 14px; font-weight: 500; }
@@ -315,7 +319,9 @@
         }
 
         function switchTab(tab) {
+            // Tắt màu vàng ở 4 tiêu đề và các ô ghi nhớ
             document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
+            document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
 
             if(tab === 'form') {
                 document.getElementById('tab-form').classList.add('active');
@@ -447,7 +453,9 @@
             document.getElementById('tab-form').classList.remove('active');
             document.getElementById('tab-history').classList.remove('active');
             
+            // Bật màu vàng cho 4 tiêu đề và các ô Ghi nhớ
             document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
+            document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
 
             document.getElementById('data-form').classList.remove('hidden');
             document.getElementById('history-view').classList.add('hidden');
@@ -499,7 +507,10 @@
                     document.getElementById('btn-save').innerText = "Lưu Phiếu Mới";
                     
                     document.getElementById('tab-form').classList.add('active');
+                    
+                    // Tắt màu vàng sau khi lưu xong
                     document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
+                    document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
                 }
 
                 document.querySelectorAll('.data-input').forEach(input => {
