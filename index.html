@@ -12,8 +12,6 @@
         
         .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; }
         .group-header h3 { margin: 0; color: #1a73e8; font-size: 17px; transition: color 0.3s; }
-        
-        /* Đổi màu tiêu đề và ô ghi nhớ sang vàng khi ở chế độ sửa */
         .group-header.edit-mode h3 { color: #d97706; } 
         .remember-cb.edit-mode { color: #d97706; font-weight: 600; }
         .remember-cb.edit-mode input[type="checkbox"] { accent-color: #d97706; }
@@ -49,11 +47,32 @@
         .history-title { font-weight: bold; color: #1a73e8; margin-bottom: 4px; display: block;}
         .history-desc { font-size: 14px; color: #555; }
         .btn-delete { color: #dc3545; font-size: 16px; cursor: pointer; padding: 5px; user-select: none; }
+
+        /* CSS Mới: Màn hình chờ (Loader) */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; }
+        .spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* CSS Mới: Thông báo nổi (Toast) */
+        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px; pointer-events: none; }
+        .toast { padding: 14px 20px; border-radius: 8px; color: white; font-weight: 500; font-size: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(-20px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); text-align: center; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast-success { background-color: #10b981; } /* Xanh lá */
+        .toast-error { background-color: #ef4444; }   /* Đỏ */
     </style>
 </head>
 <body>
     <h2>Người Sở Hữu: Chan Canh Chua (C3)</h2>
     
+    <!-- Màn hình chờ (Loading) -->
+    <div id="loader" class="hidden">
+        <div class="spinner"></div>
+        <p style="font-weight: 600;">Đang xử lý, vui lòng đợi...</p>
+    </div>
+
+    <!-- Vùng chứa thông báo nổi -->
+    <div id="toast-container"></div>
+
     <!-- Đăng nhập -->
     <div id="login-form">
         <div class="group">
@@ -235,6 +254,28 @@
         let currentEditId = null;
         let historyData = [];
 
+        // Hệ thống hiển thị Loading
+        function showLoader() { document.getElementById('loader').classList.remove('hidden'); }
+        function hideLoader() { document.getElementById('loader').classList.add('hidden'); }
+
+        // Hệ thống hiển thị Thông báo (Toast)
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            
+            // Kích hoạt hiệu ứng trượt xuống
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Tự động xóa sau 3 giây
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
             if (event === 'PASSWORD_RECOVERY') {
                 document.getElementById('login-form').classList.add('hidden');
@@ -266,52 +307,59 @@
             const pass = document.getElementById('pass').value;
 
             if (!email || pass.length < 6) {
-                alert("Vui lòng điền Email và Mật khẩu (tối thiểu 6 ký tự) để đăng ký!");
+                showToast("Vui lòng điền Email và Mật khẩu (tối thiểu 6 ký tự) để đăng ký!", "error");
                 return;
             }
 
+            showLoader();
             const { data, error } = await supabaseClient.auth.signUp({
                 email: email, password: pass
             });
+            hideLoader();
 
             if (error) {
-                alert('Lỗi đăng ký: ' + error.message);
+                showToast('Lỗi đăng ký: ' + error.message, 'error');
             } else {
-                alert('Tạo tài khoản thành công! Nhấn OK rồi bấm tiếp Đăng Nhập nhé.');
+                showToast('Tạo tài khoản thành công! Bạn có thể Đăng Nhập ngay.', 'success');
             }
         }
 
         async function forgotPassword() {
             const email = document.getElementById('email').value;
             if (!email) {
-                alert("Vui lòng nhập Email vào ô trên trước khi bấm Quên mật khẩu!");
+                showToast("Vui lòng nhập Email vào ô trên trước khi bấm Quên mật khẩu!", "error");
                 return;
             }
             
+            showLoader();
             const redirectUrl = window.location.origin + window.location.pathname;
             const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
                 redirectTo: redirectUrl,
             });
+            hideLoader();
 
             if (error) {
-                alert('Lỗi: ' + error.message);
+                showToast('Lỗi: ' + error.message, 'error');
             } else {
-                alert('Hệ thống đã gửi link khôi phục. Vui lòng kiểm tra Email!');
+                showToast('Hệ thống đã gửi link khôi phục. Vui lòng kiểm tra Email!', 'success');
             }
         }
 
         async function updatePassword() {
             const newPass = document.getElementById('new_pass').value;
             if (newPass.length < 6) {
-                alert('Mật khẩu mới phải có ít nhất 6 ký tự!');
+                showToast('Mật khẩu mới phải có ít nhất 6 ký tự!', 'error');
                 return;
             }
             
+            showLoader();
             const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+            hideLoader();
+
             if (error) {
-                alert('Lỗi cập nhật: ' + error.message);
+                showToast('Lỗi cập nhật: ' + error.message, 'error');
             } else {
-                alert('Đổi mật khẩu thành công! Tự động đăng nhập vào hệ thống.');
+                showToast('Đổi mật khẩu thành công! Tự động đăng nhập.', 'success');
                 document.getElementById('reset-form').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 switchTab('form');
@@ -319,7 +367,6 @@
         }
 
         function switchTab(tab) {
-            // Tắt màu vàng ở 4 tiêu đề và các ô ghi nhớ
             document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
             document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
 
@@ -352,7 +399,9 @@
         }
 
         async function logout() {
+            showLoader();
             await supabaseClient.auth.signOut();
+            hideLoader();
             document.getElementById('login-form').classList.remove('hidden');
             document.getElementById('app-container').classList.add('hidden');
         }
@@ -362,10 +411,17 @@
             const pass = document.getElementById('pass').value;
             const remember = document.getElementById('rem_login').checked;
 
+            if (!email || !pass) {
+                showToast("Vui lòng điền đầy đủ Email và Mật khẩu!", "error");
+                return;
+            }
+
+            showLoader();
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+            hideLoader();
 
             if (error) {
-                alert('Lỗi đăng nhập: Vui lòng kiểm tra lại Email hoặc Mật khẩu.');
+                showToast('Lỗi đăng nhập: Sai Email hoặc Mật khẩu.', 'error');
             } else {
                 if (remember) {
                     localStorage.setItem("savedEmail", email);
@@ -374,6 +430,7 @@
                     localStorage.removeItem("savedEmail");
                     localStorage.removeItem("savedPass");
                 }
+                showToast('Đăng nhập thành công!', 'success');
                 document.getElementById('login-form').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
             }
@@ -383,10 +440,13 @@
             const container = document.getElementById('history-list');
             container.innerHTML = '<p style="text-align:center;">Đang tải...</p>';
             
+            showLoader();
             const { data, error } = await supabaseClient.from('du_lieu').select('*').order('id', { ascending: false }).limit(20);
-            
+            hideLoader();
+
             if (error) {
                 container.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu. Nhớ chạy mã SQL thêm cột ID.</p>`;
+                showToast('Không thể tải lịch sử!', 'error');
                 return;
             }
 
@@ -416,11 +476,14 @@
         async function deleteRecord(event, id) {
             event.stopPropagation();
             if(confirm("Bạn có chắc chắn muốn xóa vĩnh viễn dòng dữ liệu này không?")) {
+                showLoader();
                 const { error } = await supabaseClient.from('du_lieu').delete().eq('id', id);
+                hideLoader();
+
                 if(error) {
-                    alert('Lỗi khi xóa: ' + error.message);
+                    showToast('Lỗi khi xóa: ' + error.message, 'error');
                 } else {
-                    alert('Đã xóa dữ liệu thành công!');
+                    showToast('Đã xóa dữ liệu thành công!', 'success');
                     loadHistory();
                 }
             }
@@ -453,7 +516,6 @@
             document.getElementById('tab-form').classList.remove('active');
             document.getElementById('tab-history').classList.remove('active');
             
-            // Bật màu vàng cho 4 tiêu đề và các ô Ghi nhớ
             document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
             document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
 
@@ -486,29 +548,28 @@
             if (!payload.ma_nv || !payload.ten_nv || !payload.don_vi || !payload.bien_so || 
                 !payload.so_phieu || !payload.ngay_cap || !payload.lit_cap ||
                 !payload.ngay_di || !payload.noi_di || !payload.noi_den || !payload.noi_dung) {
-                alert("Lỗi: Vui lòng điền đầy đủ thông tin vào các ô có dấu * màu đỏ!");
+                showToast("Lỗi: Vui lòng điền đầy đủ thông tin vào các ô có dấu * màu đỏ!", "error");
                 return;
             }
 
+            showLoader();
             let result;
             if (currentEditId) {
                 result = await supabaseClient.from('du_lieu').update(payload).eq('id', currentEditId);
             } else {
                 result = await supabaseClient.from('du_lieu').insert([payload]);
             }
+            hideLoader();
 
             if (result.error) {
-                alert('Lỗi khi lưu: Chắc chắn bạn đã chạy mã SQL tạo cột ID chưa? Chi tiết: ' + result.error.message);
+                showToast('Lỗi khi lưu: ' + result.error.message, 'error');
             } else {
-                alert(currentEditId ? 'Đã cập nhật phiếu thành công!' : 'Thành công! Dữ liệu đã được lưu mới.');
+                showToast(currentEditId ? 'Đã cập nhật phiếu thành công!' : 'Thành công! Dữ liệu đã được lưu mới.', 'success');
                 
                 if(currentEditId) {
                     currentEditId = null;
                     document.getElementById('btn-save').innerText = "Lưu Phiếu Mới";
-                    
                     document.getElementById('tab-form').classList.add('active');
-                    
-                    // Tắt màu vàng sau khi lưu xong
                     document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
                     document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
                 }
