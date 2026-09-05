@@ -63,10 +63,10 @@
         .toast-success { background-color: #10b981; }
         .toast-error { background-color: #ef4444; }
 
-        /* Bảng hiển thị Dashboard chi tiết */
-        .dash-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        .dash-table th, .dash-table td { border: 1px solid #ddd; padding: 8px 5px; text-align: left; }
-        .dash-table th { background-color: #f0f2f5; color: #1a73e8; text-align: center; }
+        /* Bảng hiển thị Dashboard chi tiết đầy đủ cột như Excel Bang TH */
+        .dash-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        .dash-table th, .dash-table td { border: 1px solid #ccc; padding: 6px 4px; text-align: left; }
+        .dash-table th { background-color: #e9ecef; color: #1a73e8; text-align: center; font-weight: bold; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -82,7 +82,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.01)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.02)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -124,10 +124,10 @@
         <div id="dashboard-view" class="hidden">
             <div class="group">
                 <div class="group-header">
-                    <h3>Báo Cáo Tổng Hợp Xăng</h3>
+                    <h3>Bảng Tổng Hợp Xăng (Bang TH)</h3>
                     <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
                 </div>
-                <div id="dashboard-list" style="overflow-x: auto;">
+                <div id="dashboard-list" style="overflow-x: auto; max-width: 100%;">
                     <p style="text-align:center; color:#666;">Đang tải dữ liệu...</p>
                 </div>
             </div>
@@ -265,7 +265,6 @@
         const SUPABASE_KEY = 'sb_publishable_58O7qBE7jTdCxveWzKjttw_d60MBwrr';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // THAY ĐỔI EMAIL CỦA BẠN VÀO ĐÂY ĐỂ ĐƯỢC CẤP QUYỀN XEM BÁO CÁO TỔNG HỢP
         const ADMIN_EMAIL = 'cloubleeyes@gmail.com'; 
 
         let currentEditId = null;
@@ -289,7 +288,6 @@
             }, 3000);
         }
 
-        // Hàm hỗ trợ đổi định dạng "YYYY-MM-DD" sang "DD/MM" cho gọn bảng
         function formatShortDate(dateStr) {
             if(!dateStr) return '';
             const parts = dateStr.split('-');
@@ -466,7 +464,6 @@
             container.innerHTML = '<p style="text-align:center;">Đang tổng hợp dữ liệu...</p>';
             
             showLoader();
-            // Lấy toàn bộ dữ liệu gốc từ du_lieu, sắp xếp theo nhân viên và ngày đi
             const { data, error } = await supabaseClient.from('du_lieu').select('*').order('ma_nv').order('ngay_di', { ascending: true });
             hideLoader();
 
@@ -481,59 +478,105 @@
                 return;
             }
 
-            // Gom nhóm dữ liệu theo từng nhân viên (Mã NV)
             const groupedData = {};
             data.forEach(row => {
                 if (!groupedData[row.ma_nv]) {
                     groupedData[row.ma_nv] = {
                         ten_nv: row.ten_nv || 'Chưa rõ',
+                        don_vi: row.don_vi || '',
+                        bien_so: row.bien_so || '',
                         trips: [],
                         tong_lit: 0,
-                        tong_chuyen: 0
+                        tong_km: 0,
+                        tong_phieu: 0
                     };
                 }
                 groupedData[row.ma_nv].trips.push(row);
-                groupedData[row.ma_nv].tong_chuyen += 1;
+                groupedData[row.ma_nv].tong_phieu += 1;
                 groupedData[row.ma_nv].tong_lit += parseFloat(row.lit_cap || 0);
+
+                const kmDi = parseFloat(row.km_di) || 0;
+                const kmVe = parseFloat(row.km_ve) || 0;
+                const kmHt = parseFloat(row.km_ht) || 0;
+                const tripKm = (kmVe > kmDi) ? (kmVe - kmDi + kmHt) : kmHt;
+                groupedData[row.ma_nv].tong_km += tripKm;
             });
 
             let html = '<table class="dash-table">';
-            html += '<tr><th>Ngày</th><th>Nội dung</th><th>Số Phiếu</th><th>Lít</th></tr>';
+            html += `<thead><tr>
+                <th>STT</th>
+                <th>Số phiếu cấp nhiên liệu</th>
+                <th>Ngày tháng năm cấp nhiên liệu</th>
+                <th>Số lít cấp</th>
+                <th>Ngày tháng năm đi công tác</th>
+                <th>Nơi đi</th>
+                <th>Nơi đến</th>
+                <th>Nội dung công tác</th>
+                <th>Số LCT</th>
+                <th>Số PCT</th>
+                <th>Số PTT</th>
+                <th>Biển số xe</th>
+                <th>Số km - Đi</th>
+                <th>Số km - Về</th>
+                <th>Số Km hiện trường</th>
+                <th>Tổng số km vận chuyển</th>
+                <th>Số lít xăng</th>
+                <th>Đơn vị</th>
+            </tr></thead><tbody>`;
             
             for (const ma_nv in groupedData) {
                 const group = groupedData[ma_nv];
                 
-                // Dòng 1: Header tên người dùng
+                // Dòng tên nhân viên
                 html += `<tr style="background-color: #e3f2fd;">
-                    <td colspan="4" style="font-weight: bold; color: #0d47a1; font-size: 14px;">
-                        👤 ${group.ten_nv} (${ma_nv})
+                    <td colspan="18" style="font-weight: bold; color: #0d47a1; font-size: 13px;">
+                        👤 ${group.ten_nv} (Mã NV: ${ma_nv}) — Biển số: ${group.bien_so || ''} — Đơn vị: ${group.don_vi || ''}
                     </td>
                 </tr>`;
                 
-                // Dòng 2: Chi tiết các chuyến đi
-                group.trips.forEach(trip => {
+                // Dòng chi tiết từng phiếu
+                group.trips.forEach((trip, idx) => {
+                    const kmDi = parseFloat(trip.km_di) || 0;
+                    const kmVe = parseFloat(trip.km_ve) || 0;
+                    const kmHt = parseFloat(trip.km_ht) || 0;
+                    const tongKm = (kmVe > kmDi) ? (kmVe - kmDi + kmHt) : kmHt;
+
                     html += `<tr>
-                        <td style="white-space: nowrap; text-align:center;">${formatShortDate(trip.ngay_di)}</td>
-                        <td>${trip.noi_dung || trip.noi_den || ''}</td>
+                        <td style="text-align:center;">${idx + 1}</td>
                         <td style="text-align:center;">${trip.so_phieu || ''}</td>
+                        <td style="text-align:center;">${formatShortDate(trip.ngay_cap)}</td>
+                        <td style="text-align:center;">${trip.lit_cap || ''}</td>
+                        <td style="text-align:center;">${formatShortDate(trip.ngay_di)}</td>
+                        <td>${trip.noi_di || ''}</td>
+                        <td>${trip.noi_den || ''}</td>
+                        <td>${trip.noi_dung || ''}</td>
+                        <td style="text-align:center;">${trip.so_lct || ''}</td>
+                        <td style="text-align:center;">${trip.so_pct || ''}</td>
+                        <td style="text-align:center;">${trip.so_ptt || ''}</td>
+                        <td style="text-align:center;">${trip.bien_so || ''}</td>
+                        <td style="text-align:center;">${trip.km_di || ''}</td>
+                        <td style="text-align:center;">${trip.km_ve || ''}</td>
+                        <td style="text-align:center;">${trip.km_ht || ''}</td>
+                        <td style="text-align:center; font-weight:bold;">${tongKm}</td>
                         <td style="text-align:center; font-weight:bold;">${trip.lit_cap || ''}</td>
+                        <td style="text-align:center;">${trip.don_vi || ''}</td>
                     </tr>`;
                 });
                 
-                // Dòng 3: Dòng tổng cộng cuối mỗi người
+                // Dòng tổng cộng cuối mỗi người
                 let formattedLit = Number.isInteger(group.tong_lit) ? group.tong_lit : group.tong_lit.toFixed(1);
                 
-                html += `<tr style="background-color: #fff3e0; border-bottom: 2px solid #ccc;">
-                    <td colspan="3" style="text-align: right; padding-right: 10px; font-weight: bold; font-size: 14px;">
-                        Tổng (${group.tong_chuyen} phiếu):
+                html += `<tr style="background-color: #fff3e0; border-bottom: 2px solid #ccc; font-weight: bold;">
+                    <td colspan="15" style="text-align: right; padding-right: 10px;">
+                        Tổng cộng (${group.tong_phieu} phiếu):
                     </td>
-                    <td style="text-align:center; color:#d93025; font-weight: bold; font-size: 15px;">
-                        ${formattedLit}
-                    </td>
+                    <td style="text-align:center;">${group.tong_km}</td>
+                    <td style="text-align:center; color:#d93025; font-size: 14px;">${formattedLit}</td>
+                    <td></td>
                 </tr>`;
             }
             
-            html += '</table>';
+            html += '</tbody></table>';
             container.innerHTML = html;
         }
 
