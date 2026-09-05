@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Người Sở Hữu: Chan Canh Chua (C3)</title>
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Thư viện Kéo thả -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     
     <style>
@@ -46,20 +44,17 @@
         .nav-tabs button { margin-top: 0; padding: 10px; background: #e0e0e0; color: #333; transition: 0.3s; }
         .nav-tabs button.active { background: #1a73e8; color: white; }
         
-        /* Cấu hình thêm thuộc tính kéo thả cho Lịch sử */
         .history-item { padding: 12px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff; cursor: pointer; border-left: 4px solid #1a73e8; position: relative; user-select: none; -webkit-user-select: none; }
         .history-item:active { background: #f0f2f5; }
         .history-title { font-weight: bold; color: #1a73e8; margin-bottom: 4px; display: block;}
         .history-desc { font-size: 14px; color: #555; }
         .btn-delete { color: #dc3545; font-size: 16px; cursor: pointer; padding: 5px; user-select: none; }
-        .sortable-ghost { opacity: 0.5; background-color: #e3f2fd; border: 2px dashed #1a73e8; } /* Giao diện khi đang kéo */
+        .sortable-ghost { opacity: 0.5; background-color: #e3f2fd; border: 2px dashed #1a73e8; } 
 
-        /* Màn hình chờ (Loader) */
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; }
         .spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Thông báo nổi (Toast) */
         #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px; pointer-events: none; }
         .toast { padding: 14px 20px; border-radius: 8px; color: white; font-weight: 500; font-size: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(-20px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); text-align: center; }
         .toast.show { opacity: 1; transform: translateY(0); }
@@ -77,7 +72,6 @@
 
     <div id="toast-container"></div>
 
-    <!-- Đăng nhập -->
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
@@ -99,7 +93,6 @@
         </div>
     </div>
 
-    <!-- Khôi phục mật khẩu -->
     <div id="reset-form" class="hidden">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
@@ -114,28 +107,24 @@
         </div>
     </div>
 
-    <!-- Khung ứng dụng chính -->
     <div id="app-container" class="hidden">
         <div class="nav-tabs">
             <button id="tab-form" class="active" onclick="switchTab('form')">📝 Nhập Mới</button>
             <button id="tab-history" onclick="switchTab('history')">🕒 Lịch Sử</button>
         </div>
 
-        <!-- Chế độ xem Lịch sử -->
         <div id="history-view" class="hidden">
             <div class="group">
                 <div class="group-header">
                     <h3>20 chuyến đi gần nhất</h3>
                     <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
                 </div>
-                <!-- Vùng chứa danh sách Lịch sử hỗ trợ kéo thả -->
                 <div id="history-list">
                     <p style="text-align:center; color:#666;">Đang tải dữ liệu...</p>
                 </div>
             </div>
         </div>
 
-        <!-- Chế độ Nhập liệu / Cập nhật -->
         <div id="data-form">
             <div class="group">
                 <div class="group-header edit-target">
@@ -258,7 +247,7 @@
 
         let currentEditId = null;
         let historyData = [];
-        let sortableInstance = null; // Biến lưu trữ đối tượng kéo thả
+        let sortableInstance = null; 
 
         function showLoader() { document.getElementById('loader').classList.remove('hidden'); }
         function hideLoader() { document.getElementById('loader').classList.add('hidden'); }
@@ -271,7 +260,6 @@
             container.appendChild(toast);
             
             setTimeout(() => toast.classList.add('show'), 10);
-            
             setTimeout(() => {
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 300);
@@ -314,9 +302,7 @@
             }
 
             showLoader();
-            const { data, error } = await supabaseClient.auth.signUp({
-                email: email, password: pass
-            });
+            const { data, error } = await supabaseClient.auth.signUp({ email: email, password: pass });
             hideLoader();
 
             if (error) {
@@ -335,9 +321,7 @@
             
             showLoader();
             const redirectUrl = window.location.origin + window.location.pathname;
-            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-                redirectTo: redirectUrl,
-            });
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
             hideLoader();
 
             if (error) {
@@ -438,21 +422,39 @@
             hideLoader();
 
             if (error) {
-                container.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu. Nhớ chạy mã SQL thêm cột ID.</p>`;
+                container.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu.</p>`;
                 showToast('Không thể tải lịch sử!', 'error');
                 return;
             }
 
+            // Xử lý đối chiếu và khôi phục thứ tự đã kéo thả
+            try {
+                const savedOrderStr = localStorage.getItem('history_order');
+                if (savedOrderStr) {
+                    const savedOrder = JSON.parse(savedOrderStr);
+                    data.sort((a, b) => {
+                        let indexA = savedOrder.indexOf(a.id);
+                        let indexB = savedOrder.indexOf(b.id);
+                        
+                        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                        if (indexA === -1 && indexB !== -1) return -1;
+                        if (indexA !== -1 && indexB === -1) return 1;
+                        return 0;
+                    });
+                }
+            } catch (e) {}
+
             historyData = data;
+
             if (data.length === 0) {
                 container.innerHTML = '<p style="text-align:center;">Chưa có dữ liệu nào.</p>';
                 return;
             }
 
             container.innerHTML = '';
-            data.forEach((item, index) => {
+            data.forEach((item) => {
                 container.innerHTML += `
-                    <div class="history-item" onclick="editRecord(${index})">
+                    <div class="history-item" data-id="${item.id}" onclick="editRecord(${item.id})">
                         <div style="display:flex; justify-content: space-between; align-items: center;">
                             <span class="history-title">Ngày đi: ${item.ngay_di || 'Trống'}</span>
                             <span class="btn-delete" onclick="deleteRecord(event, ${item.id})">❌</span>
@@ -465,15 +467,20 @@
                 `;
             });
 
-            // Kích hoạt tính năng kéo thả
+            // Cập nhật sự kiện ghi nhớ khi kéo thả kết thúc
             if (sortableInstance) {
                 sortableInstance.destroy();
             }
             sortableInstance = Sortable.create(container, {
-                delay: 300, // Nhấn giữ 300ms mới bắt đầu kéo 
-                delayOnTouchOnly: true, // Chỉ áp dụng delay trên điện thoại cảm ứng
-                animation: 150, // Hiệu ứng kéo mượt mà
-                ghostClass: 'sortable-ghost' // Lớp CSS khi thẻ đang bị kéo lên
+                delay: 300,
+                delayOnTouchOnly: true,
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: function () {
+                    const items = container.querySelectorAll('.history-item');
+                    const newOrder = Array.from(items).map(item => parseInt(item.getAttribute('data-id')));
+                    localStorage.setItem('history_order', JSON.stringify(newOrder));
+                }
             });
         }
 
@@ -493,8 +500,9 @@
             }
         }
 
-        function editRecord(index) {
-            const item = historyData[index];
+        function editRecord(id) {
+            const item = historyData.find(d => d.id === id);
+            if(!item) return;
             currentEditId = item.id;
 
             document.getElementById('ma_nv').value = item.ma_nv || '';
