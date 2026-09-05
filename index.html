@@ -93,7 +93,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.08)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.09)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -152,7 +152,7 @@
         <div id="history-view" class="hidden">
             <div class="group">
                 <div class="group-header">
-                    <h3>20 chuyến đi gần nhất</h3>
+                    <h3>40 phiếu gần nhất</h3>
                     <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
                 </div>
                 <div id="history-list">
@@ -285,7 +285,6 @@
         const SUPABASE_KEY = 'sb_publishable_58O7qBE7jTdCxveWzKjttw_d60MBwrr';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // THAY ĐỔI EMAIL CỦA BẠN VÀO ĐÂY ĐỂ ĐƯỢC CẤP QUYỀN XEM BÁO CÁO TỔNG HỢP
         const ADMIN_EMAIL = 'cloubleeyes@gmail.com'; 
 
         let currentEditId = null;
@@ -661,18 +660,16 @@
             
             showLoader();
             
-            // Lấy email người đang đăng nhập
             const { data: { user } } = await supabaseClient.auth.getUser();
             const userEmail = user ? user.email : '';
 
             let query = supabaseClient.from('du_lieu').select('*');
             
-            // Nếu KHÔNG phải Admin thì chỉ tải những phiếu do chính email này tạo
             if (userEmail !== ADMIN_EMAIL) {
                 query = query.eq('email_tao', userEmail);
             }
 
-            const { data, error } = await query.order('id', { ascending: false }).limit(20);
+            const { data, error } = await query.order('id', { ascending: false }).limit(40);
             hideLoader();
 
             if (error) {
@@ -848,7 +845,6 @@
         }
 
         async function saveData() {
-            // Lấy email hiện tại để gán vào phiếu
             const { data: { user } } = await supabaseClient.auth.getUser();
             const userEmail = user ? user.email : '';
 
