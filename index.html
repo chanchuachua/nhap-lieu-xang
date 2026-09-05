@@ -24,6 +24,10 @@
         button.btn-signup { background: #28a745; margin-top: 12px; }
         button.btn-signup:active { background: #218838; }
         
+        /* Đổi màu nút lưu khi ở chế độ sửa */
+        button#btn-save.edit-mode-btn { background: #d97706; }
+        button#btn-save.edit-mode-btn:active { background: #b45309; }
+
         label.title { font-weight: 600; font-size: 14px; margin-top: 12px; display: block; margin-bottom: 6px; color: #444; }
         .req { color: #dc3545; font-weight: bold; }
         
@@ -38,6 +42,7 @@
         .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; padding: 5px; user-select: none; }
         
         .forgot-link { display: block; text-align: center; margin-top: 15px; color: #1a73e8; text-decoration: none; font-size: 14px; font-weight: 500; }
+        .note-text { font-size: 13px; color: #d93025; text-align: center; margin-top: 8px; margin-bottom: 0; font-weight: 500; }
         
         h2 { font-size: 18px; text-align: center; margin-top: 5px; margin-bottom: 20px; color: #222; }
         .nav-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
@@ -50,7 +55,8 @@
         .history-item:active { background: #f0f2f5; }
         .history-title { font-weight: bold; color: #1a73e8; margin-bottom: 4px; display: block;}
         .history-desc { font-size: 14px; color: #555; }
-        .btn-delete { color: #dc3545; font-size: 16px; cursor: pointer; padding: 5px; user-select: none; }
+        .action-btns { display: flex; gap: 10px; }
+        .btn-action { font-size: 18px; cursor: pointer; padding: 5px; user-select: none; }
         .sortable-ghost { opacity: 0.5; background-color: #e3f2fd; border: 2px dashed #1a73e8; } 
 
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; }
@@ -63,7 +69,6 @@
         .toast-success { background-color: #10b981; }
         .toast-error { background-color: #ef4444; }
 
-        /* Bảng hiển thị Dashboard chi tiết đầy đủ cột như Excel Bang TH */
         .dash-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
         .dash-table th, .dash-table td { border: 1px solid #ccc; padding: 6px 4px; text-align: left; }
         .dash-table th { background-color: #e9ecef; color: #1a73e8; text-align: center; font-weight: bold; white-space: nowrap; }
@@ -82,7 +87,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.02)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.04)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -96,6 +101,7 @@
             </label>
             <button onclick="login()">Đăng Nhập</button>
             <button class="btn-signup" onclick="signup()">Tạo Tài Khoản Mới</button>
+            <p class="note-text">*Lưu ý: Vui lòng đợi khoảng 5 phút sau khi tạo tài khoản để hệ thống ghi nhận trước khi Đăng Nhập.</p>
             <a href="#" class="forgot-link" onclick="forgotPassword()">Quên mật khẩu?</a>
         </div>
     </div>
@@ -205,7 +211,7 @@
                 </div>
                 <label class="title">Nơi đi: <span class="req">*</span></label>
                 <div class="input-row">
-                    <div class="input-wrapper"><input type="text" id="noi_di" class="data-input" placeholder="Nơi đi"></div>
+                    <div class="input-wrapper"><input type="text" id="noi_di" class="data-input" placeholder="VD: ĐL Lai Vung"></div>
                     <label class="remember-cb"><input type="checkbox" id="rem_noi_di" checked> Ghi nhớ</label>
                 </div>
                 <label class="title">Nơi đến: <span class="req">*</span></label>
@@ -215,7 +221,7 @@
                 </div>
                 <label class="title">Nội dung công tác: <span class="req">*</span></label>
                 <div class="input-row">
-                    <div class="input-wrapper"><input type="text" id="noi_dung" class="data-input" placeholder="Mô tả công việc"></div>
+                    <div class="input-wrapper"><input type="text" id="noi_dung" class="data-input" placeholder="VD: Ngừng cấp điện"></div>
                     <label class="remember-cb"><input type="checkbox" id="rem_noi_dung" checked> Ghi nhớ</label>
                 </div>
                 <label class="title">Số Lệnh Công Tác (LCT):</label>
@@ -265,6 +271,7 @@
         const SUPABASE_KEY = 'sb_publishable_58O7qBE7jTdCxveWzKjttw_d60MBwrr';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // THAY ĐỔI EMAIL CỦA BẠN VÀO ĐÂY ĐỂ ĐƯỢC CẤP QUYỀN XEM BÁO CÁO TỔNG HỢP
         const ADMIN_EMAIL = 'cloubleeyes@gmail.com'; 
 
         let currentEditId = null;
@@ -337,7 +344,7 @@
             if (error) {
                 showToast('Lỗi đăng ký: ' + error.message, 'error');
             } else {
-                showToast('Tạo tài khoản thành công! Bạn có thể Đăng Nhập ngay.', 'success');
+                showToast('Tạo tài khoản thành công! Đợi 5 phút để hệ thống ghi nhận rồi Đăng Nhập.', 'success');
             }
         }
 
@@ -381,32 +388,56 @@
             }
         }
 
-        function switchTab(tab) {
-            document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
-            document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
-
-            document.getElementById('tab-form').classList.remove('active');
+        // Hàm hỗ trợ để chuyển sang tab form mà không làm mất trạng thái
+        function showFormUIOnly() {
+            document.getElementById('tab-form').classList.add('active');
             document.getElementById('tab-history').classList.remove('active');
             document.getElementById('tab-dashboard').classList.remove('active');
             
-            document.getElementById('data-form').classList.add('hidden');
+            document.getElementById('data-form').classList.remove('hidden');
             document.getElementById('history-view').classList.add('hidden');
             document.getElementById('dashboard-view').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
+        function switchTab(tab) {
             if(tab === 'form') {
-                document.getElementById('tab-form').classList.add('active');
-                document.getElementById('data-form').classList.remove('hidden');
+                showFormUIOnly();
                 
-                if(currentEditId) {
-                    currentEditId = null;
-                    document.getElementById('btn-save').innerText = "Lưu Phiếu Mới";
-                }
+                // Nếu bấm tab Nhập Mới thủ công, reset về chế độ tạo mới
+                currentEditId = null;
+                const btnSave = document.getElementById('btn-save');
+                btnSave.innerText = "Lưu Phiếu Mới";
+                btnSave.classList.remove('edit-mode-btn');
+                
+                document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
+                document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
+                
+                // Khôi phục bản nháp
+                document.querySelectorAll('.data-input').forEach(input => {
+                    const cb = document.getElementById('rem_' + input.id);
+                    if (cb && cb.checked) {
+                        input.value = localStorage.getItem("draft_" + input.id) || '';
+                    } else {
+                        input.value = '';
+                    }
+                });
             } else if (tab === 'history') {
+                document.getElementById('tab-form').classList.remove('active');
                 document.getElementById('tab-history').classList.add('active');
+                document.getElementById('tab-dashboard').classList.remove('active');
+                
+                document.getElementById('data-form').classList.add('hidden');
                 document.getElementById('history-view').classList.remove('hidden');
+                document.getElementById('dashboard-view').classList.add('hidden');
                 loadHistory();
             } else if (tab === 'dashboard') {
+                document.getElementById('tab-form').classList.remove('active');
+                document.getElementById('tab-history').classList.remove('active');
                 document.getElementById('tab-dashboard').classList.add('active');
+                
+                document.getElementById('data-form').classList.add('hidden');
+                document.getElementById('history-view').classList.add('hidden');
                 document.getElementById('dashboard-view').classList.remove('hidden');
                 loadDashboard();
             }
@@ -527,14 +558,12 @@
             for (const ma_nv in groupedData) {
                 const group = groupedData[ma_nv];
                 
-                // Dòng tên nhân viên
                 html += `<tr style="background-color: #e3f2fd;">
                     <td colspan="18" style="font-weight: bold; color: #0d47a1; font-size: 13px;">
                         👤 ${group.ten_nv} (Mã NV: ${ma_nv}) — Biển số: ${group.bien_so || ''} — Đơn vị: ${group.don_vi || ''}
                     </td>
                 </tr>`;
                 
-                // Dòng chi tiết từng phiếu
                 group.trips.forEach((trip, idx) => {
                     const kmDi = parseFloat(trip.km_di) || 0;
                     const kmVe = parseFloat(trip.km_ve) || 0;
@@ -563,7 +592,6 @@
                     </tr>`;
                 });
                 
-                // Dòng tổng cộng cuối mỗi người
                 let formattedLit = Number.isInteger(group.tong_lit) ? group.tong_lit : group.tong_lit.toFixed(1);
                 
                 html += `<tr style="background-color: #fff3e0; border-bottom: 2px solid #ccc; font-weight: bold;">
@@ -618,11 +646,15 @@
 
             container.innerHTML = '';
             data.forEach((item) => {
+                // Thêm nút Cây bút chì để sửa, còn click vào ngoài để Nhân bản
                 container.innerHTML += `
-                    <div class="history-item" data-id="${item.id}" onclick="editRecord(${item.id})">
+                    <div class="history-item" data-id="${item.id}" onclick="cloneRecord(${item.id})">
                         <div style="display:flex; justify-content: space-between; align-items: center;">
                             <span class="history-title">Ngày đi: ${item.ngay_di || 'Trống'}</span>
-                            <span class="btn-delete" onclick="deleteRecord(event, ${item.id})">❌</span>
+                            <div class="action-btns">
+                                <span class="btn-action" onclick="editRecord(event, ${item.id})" title="Sửa phiếu">✏️</span>
+                                <span class="btn-action" onclick="deleteRecord(event, ${item.id})" title="Xóa phiếu">❌</span>
+                            </div>
                         </div>
                         <div class="history-desc">
                             <strong>Nội dung:</strong> ${item.noi_dung || 'Trống'} <br>
@@ -664,11 +696,8 @@
             }
         }
 
-        function editRecord(id) {
-            const item = historyData.find(d => d.id === id);
-            if(!item) return;
-            currentEditId = item.id;
-
+        // Đổ dữ liệu dùng chung cho cả Clone và Edit
+        function fillForm(item) {
             document.getElementById('ma_nv').value = item.ma_nv || '';
             document.getElementById('ten_nv').value = item.ten_nv || '';
             document.getElementById('don_vi').value = item.don_vi || '';
@@ -686,14 +715,41 @@
             document.getElementById('km_di').value = item.km_di || '';
             document.getElementById('km_ve').value = item.km_ve || '';
             document.getElementById('km_ht').value = item.km_ht || '';
+        }
 
-            document.getElementById('btn-save').innerText = "Cập Nhật Dữ Liệu";
+        // Chế độ Nhân Bản (Tạo mới)
+        function cloneRecord(id) {
+            const item = historyData.find(d => d.id === id);
+            if(!item) return;
+            fillForm(item);
             
-            switchTab('form');
+            currentEditId = null;
+            const btnSave = document.getElementById('btn-save');
+            btnSave.innerText = "Lưu Phiếu Mới";
+            btnSave.classList.remove('edit-mode-btn');
+            
+            document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
+            document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
+            
+            showFormUIOnly();
+        }
+
+        // Chế độ Cập nhật (Sửa)
+        function editRecord(event, id) {
+            event.stopPropagation(); // Ngăn kích hoạt cloneRecord khi bấm vào cây bút
+            const item = historyData.find(d => d.id === id);
+            if(!item) return;
+            fillForm(item);
+            
+            currentEditId = item.id;
+            const btnSave = document.getElementById('btn-save');
+            btnSave.innerText = "Cập Nhật Dữ Liệu";
+            btnSave.classList.add('edit-mode-btn');
             
             document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
             document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            showFormUIOnly();
         }
 
         async function saveData() {
@@ -740,7 +796,9 @@
                 
                 if(currentEditId) {
                     currentEditId = null;
-                    document.getElementById('btn-save').innerText = "Lưu Phiếu Mới";
+                    const btnSave = document.getElementById('btn-save');
+                    btnSave.innerText = "Lưu Phiếu Mới";
+                    btnSave.classList.remove('edit-mode-btn');
                     document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
                     document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
                 }
