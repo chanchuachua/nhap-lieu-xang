@@ -46,11 +46,15 @@
         .note-text { font-size: 13px; color: #d93025; text-align: center; margin-top: 8px; margin-bottom: 0; font-weight: 500; }
         
         h2 { font-size: 18px; text-align: center; margin-top: 5px; margin-bottom: 20px; color: #222; }
-        .nav-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-        .nav-tabs button { margin-top: 0; padding: 10px; background: #e0e0e0; color: #333; transition: 0.3s; }
+        
+        /* Cập nhật tabs để vừa 4 nút trên điện thoại */
+        .nav-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .nav-tabs button { flex: 1; margin-top: 0; padding: 10px 2px; font-size: 13px; background: #e0e0e0; color: #333; transition: 0.3s; white-space: nowrap; border-radius: 6px; }
         .nav-tabs button.active { background: #1a73e8; color: white; }
         .nav-tabs button#tab-dashboard { background: #28a745; color: white; }
         .nav-tabs button#tab-dashboard.active { background: #1e7e34; }
+        .nav-tabs button#tab-quyettoan { background: #6f42c1; color: white; }
+        .nav-tabs button#tab-quyettoan.active { background: #5a32a3; }
         
         .history-item { padding: 12px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff; cursor: pointer; border-left: 4px solid #1a73e8; position: relative; user-select: none; -webkit-user-select: none; }
         .history-item:active { background: #f0f2f5; }
@@ -70,7 +74,8 @@
         .toast-success { background-color: #10b981; }
         .toast-error { background-color: #ef4444; }
 
-        #dashboard-list { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
+        /* Bảng hiển thị Dashboard và Quyết Toán (Dính Tiêu đề) */
+        #dashboard-list, #quyettoan-list { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
         .dash-table { width: 100%; border-collapse: collapse; margin-top: 0px; font-size: 12px; }
         .dash-table th, .dash-table td { border: 1px solid #ccc; padding: 6px 4px; text-align: left; }
         .dash-table th { 
@@ -93,7 +98,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.09)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.10)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -132,14 +137,16 @@
             <button id="tab-form" class="active" onclick="switchTab('form')">📝 Nhập Mới</button>
             <button id="tab-history" onclick="switchTab('history')">🕒 Lịch Sử</button>
             <button id="tab-dashboard" class="hidden" onclick="switchTab('dashboard')">📊 Tổng Hợp</button>
+            <button id="tab-quyettoan" class="hidden" onclick="switchTab('quyettoan')">🧮 Quyết Toán</button>
         </div>
 
+        <!-- BẢNG TỔNG HỢP -->
         <div id="dashboard-view" class="hidden">
             <div class="group">
                 <div class="group-header">
-                    <h3>Bảng Tổng Hợp Xăng (Bang TH)</h3>
+                    <h3>Bảng Tổng Hợp (Bang TH)</h3>
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn-logout" onclick="exportExcel()" style="background-color: #28a745; color: white;">📥 Xuất Excel</button>
+                        <button class="btn-logout" onclick="exportExcelTH()" style="background-color: #28a745; color: white;">📥 Xuất Excel</button>
                         <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
                     </div>
                 </div>
@@ -149,6 +156,23 @@
             </div>
         </div>
 
+        <!-- BẢNG QUYẾT TOÁN -->
+        <div id="quyettoan-view" class="hidden">
+            <div class="group">
+                <div class="group-header">
+                    <h3>Bảng Quyết Toán (Bang QT)</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-logout" onclick="exportExcelQT()" style="background-color: #28a745; color: white;">📥 Xuất Excel</button>
+                        <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
+                    </div>
+                </div>
+                <div id="quyettoan-list">
+                    <p style="text-align:center; color:#666;">Đang tải dữ liệu...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- LỊCH SỬ -->
         <div id="history-view" class="hidden">
             <div class="group">
                 <div class="group-header">
@@ -161,6 +185,7 @@
             </div>
         </div>
 
+        <!-- FORM NHẬP -->
         <div id="data-form">
             <div class="group">
                 <div class="group-header edit-target">
@@ -301,18 +326,23 @@
             toast.className = `toast toast-${type}`;
             toast.innerText = message;
             container.appendChild(toast);
-            
             setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
+        // Định dạng DD/MM (Dùng cho Tổng Hợp)
         function formatShortDate(dateStr) {
             if(!dateStr) return '';
             const parts = dateStr.split('-');
             if(parts.length === 3) return `${parts[2]}/${parts[1]}`;
+            return dateStr;
+        }
+
+        // Định dạng DD/MM/YYYY (Dùng cho Quyết Toán)
+        function formatDateDMY(dateStr) {
+            if(!dateStr) return '';
+            const parts = dateStr.split('-');
+            if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
             return dateStr;
         }
 
@@ -331,9 +361,7 @@
             }
             document.querySelectorAll('.data-input').forEach(input => {
                 const savedVal = localStorage.getItem("draft_" + input.id);
-                if (savedVal !== null) {
-                    input.value = savedVal;
-                }
+                if (savedVal !== null) { input.value = savedVal; }
             });
         };
 
@@ -374,11 +402,8 @@
             const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
             hideLoader();
 
-            if (error) {
-                showToast('Lỗi: ' + error.message, 'error');
-            } else {
-                showToast('Hệ thống đã gửi link khôi phục. Vui lòng kiểm tra Email!', 'success');
-            }
+            if (error) { showToast('Lỗi: ' + error.message, 'error'); } 
+            else { showToast('Hệ thống đã gửi link khôi phục. Vui lòng kiểm tra Email!', 'success'); }
         }
 
         async function updatePassword() {
@@ -392,9 +417,8 @@
             const { error } = await supabaseClient.auth.updateUser({ password: newPass });
             hideLoader();
 
-            if (error) {
-                showToast('Lỗi cập nhật: ' + error.message, 'error');
-            } else {
+            if (error) { showToast('Lỗi cập nhật: ' + error.message, 'error'); } 
+            else {
                 showToast('Đổi mật khẩu thành công! Tự động đăng nhập.', 'success');
                 document.getElementById('reset-form').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
@@ -403,19 +427,27 @@
         }
 
         function showFormUIOnly() {
+            document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-form').classList.add('active');
-            document.getElementById('tab-history').classList.remove('active');
-            document.getElementById('tab-dashboard').classList.remove('active');
             
             document.getElementById('data-form').classList.remove('hidden');
             document.getElementById('history-view').classList.add('hidden');
             document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('quyettoan-view').classList.add('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function switchTab(tab) {
+            document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            
+            document.getElementById('data-form').classList.add('hidden');
+            document.getElementById('history-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('quyettoan-view').classList.add('hidden');
+
             if(tab === 'form') {
-                showFormUIOnly();
+                document.getElementById('data-form').classList.remove('hidden');
                 currentEditId = null;
                 loadedRecordId = null;
                 const btnSave = document.getElementById('btn-save');
@@ -432,28 +464,17 @@
                     const cb = document.getElementById('rem_' + input.id);
                     if (cb && cb.checked) {
                         input.value = localStorage.getItem("draft_" + input.id) || '';
-                    } else {
-                        input.value = '';
-                    }
+                    } else { input.value = ''; }
                 });
             } else if (tab === 'history') {
-                document.getElementById('tab-form').classList.remove('active');
-                document.getElementById('tab-history').classList.add('active');
-                document.getElementById('tab-dashboard').classList.remove('active');
-                
-                document.getElementById('data-form').classList.add('hidden');
                 document.getElementById('history-view').classList.remove('hidden');
-                document.getElementById('dashboard-view').classList.add('hidden');
                 loadHistory();
             } else if (tab === 'dashboard') {
-                document.getElementById('tab-form').classList.remove('active');
-                document.getElementById('tab-history').classList.remove('active');
-                document.getElementById('tab-dashboard').classList.add('active');
-                
-                document.getElementById('data-form').classList.add('hidden');
-                document.getElementById('history-view').classList.add('hidden');
                 document.getElementById('dashboard-view').classList.remove('hidden');
                 loadDashboard();
+            } else if (tab === 'quyettoan') {
+                document.getElementById('quyettoan-view').classList.remove('hidden');
+                loadQuyetToan();
             }
         }
 
@@ -470,18 +491,14 @@
             const pass = document.getElementById('pass').value;
             const remember = document.getElementById('rem_login').checked;
 
-            if (!email || !pass) {
-                showToast("Vui lòng điền đầy đủ Email và Mật khẩu!", "error");
-                return;
-            }
+            if (!email || !pass) { showToast("Vui lòng điền đầy đủ Email và Mật khẩu!", "error"); return; }
 
             showLoader();
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
             hideLoader();
 
-            if (error) {
-                showToast('Lỗi đăng nhập: Sai Email hoặc Mật khẩu.', 'error');
-            } else {
+            if (error) { showToast('Lỗi đăng nhập: Sai Email hoặc Mật khẩu.', 'error'); } 
+            else {
                 if (remember) {
                     localStorage.setItem("savedEmail", email);
                     localStorage.setItem("savedPass", pass);
@@ -490,10 +507,13 @@
                     localStorage.removeItem("savedPass");
                 }
                 
+                // Hiển thị cả 2 tab báo cáo cho Admin
                 if (email === ADMIN_EMAIL) {
                     document.getElementById('tab-dashboard').classList.remove('hidden');
+                    document.getElementById('tab-quyettoan').classList.remove('hidden');
                 } else {
                     document.getElementById('tab-dashboard').classList.add('hidden');
+                    document.getElementById('tab-quyettoan').classList.add('hidden');
                 }
 
                 showToast('Đăng nhập thành công!', 'success');
@@ -504,35 +524,43 @@
             }
         }
 
-        function exportExcel() {
+        // Xuất Excel Bảng Tổng Hợp
+        function exportExcelTH() {
             try {
-                let table = document.querySelector('.dash-table');
-                if(!table) {
-                    showToast("Không có dữ liệu để xuất!", "error");
-                    return;
-                }
+                let table = document.querySelector('.th-table');
+                if(!table) { showToast("Không có dữ liệu để xuất!", "error"); return; }
                 showLoader();
                 let cloneTable = table.cloneNode(true);
                 let wb = XLSX.utils.book_new();
                 let ws = XLSX.utils.table_to_sheet(cloneTable);
-                
-                const wscols = [
-                    {wch: 5}, {wch: 15}, {wch: 15}, {wch: 10}, {wch: 15},
-                    {wch: 15}, {wch: 15}, {wch: 25}, {wch: 10}, {wch: 10},
-                    {wch: 10}, {wch: 15}, {wch: 10}, {wch: 10}, {wch: 15},
-                    {wch: 15}, {wch: 10}, {wch: 15}
-                ];
+                const wscols = [ {wch: 5}, {wch: 15}, {wch: 15}, {wch: 10}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 25}, {wch: 10}, {wch: 10}, {wch: 10}, {wch: 15}, {wch: 10}, {wch: 10}, {wch: 15}, {wch: 15}, {wch: 10}, {wch: 15} ];
                 ws['!cols'] = wscols;
-
                 XLSX.utils.book_append_sheet(wb, ws, "Bang TH");
                 XLSX.writeFile(wb, "Bang_Tong_Hop_Xang.xlsx");
-                
                 hideLoader();
-                showToast("Xuất Excel thành công!", "success");
+                showToast("Xuất Excel Tổng Hợp thành công!", "success");
             } catch(err) {
+                hideLoader(); console.error(err); showToast("Lỗi xuất Excel: " + err.message, "error");
+            }
+        }
+
+        // Xuất Excel Bảng Quyết Toán
+        function exportExcelQT() {
+            try {
+                let table = document.querySelector('.qt-table');
+                if(!table) { showToast("Không có dữ liệu để xuất!", "error"); return; }
+                showLoader();
+                let cloneTable = table.cloneNode(true);
+                let wb = XLSX.utils.book_new();
+                let ws = XLSX.utils.table_to_sheet(cloneTable);
+                const wscols = [ {wch: 5}, {wch: 15}, {wch: 35}, {wch: 15}, {wch: 25}, {wch: 15} ];
+                ws['!cols'] = wscols;
+                XLSX.utils.book_append_sheet(wb, ws, "Bang QT");
+                XLSX.writeFile(wb, "Bang_Quyet_Toan_Xang.xlsx");
                 hideLoader();
-                console.error(err);
-                showToast("Lỗi xuất Excel: " + err.message, "error");
+                showToast("Xuất Excel Quyết Toán thành công!", "success");
+            } catch(err) {
+                hideLoader(); console.error(err); showToast("Lỗi xuất Excel: " + err.message, "error");
             }
         }
 
@@ -544,29 +572,13 @@
             const { data, error } = await supabaseClient.from('du_lieu').select('*').order('ma_nv').order('ngay_di', { ascending: true });
             hideLoader();
 
-            if (error) {
-                container.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu báo cáo: ${error.message}</p>`;
-                showToast('Không thể tải báo cáo!', 'error');
-                return;
-            }
-
-            if (data.length === 0) {
-                container.innerHTML = '<p style="text-align:center;">Chưa có dữ liệu nào trong hệ thống.</p>';
-                return;
-            }
+            if (error) { showToast('Không thể tải báo cáo!', 'error'); return; }
+            if (data.length === 0) { container.innerHTML = '<p style="text-align:center;">Chưa có dữ liệu nào trong hệ thống.</p>'; return; }
 
             const groupedData = {};
             data.forEach(row => {
                 if (!groupedData[row.ma_nv]) {
-                    groupedData[row.ma_nv] = {
-                        ten_nv: row.ten_nv || 'Chưa rõ',
-                        don_vi: row.don_vi || '',
-                        bien_so: row.bien_so || '',
-                        trips: [],
-                        tong_lit: 0,
-                        tong_km: 0,
-                        tong_phieu: 0
-                    };
+                    groupedData[row.ma_nv] = { ten_nv: row.ten_nv || 'Chưa rõ', don_vi: row.don_vi || '', bien_so: row.bien_so || '', trips: [], tong_lit: 0, tong_km: 0, tong_phieu: 0 };
                 }
                 groupedData[row.ma_nv].trips.push(row);
                 groupedData[row.ma_nv].tong_phieu += 1;
@@ -579,36 +591,12 @@
                 groupedData[row.ma_nv].tong_km += tripKm;
             });
 
-            let html = '<table class="dash-table">';
-            html += `<thead><tr>
-                <th>STT</th>
-                <th>Số phiếu cấp nhiên liệu</th>
-                <th>Ngày tháng năm cấp nhiên liệu</th>
-                <th>Số lít cấp</th>
-                <th>Ngày tháng năm đi công tác</th>
-                <th>Nơi đi</th>
-                <th>Nơi đến</th>
-                <th>Nội dung công tác</th>
-                <th>Số LCT</th>
-                <th>Số PCT</th>
-                <th>Số PTT</th>
-                <th>Biển số xe</th>
-                <th>Số km - Đi</th>
-                <th>Số km - Về</th>
-                <th>Số Km hiện trường</th>
-                <th>Tổng số km vận chuyển</th>
-                <th>Số lít xăng</th>
-                <th>Đơn vị</th>
-            </tr></thead><tbody>`;
+            let html = '<table class="dash-table th-table">';
+            html += `<thead><tr><th>STT</th><th>Số phiếu cấp NL</th><th>Ngày tháng năm cấp NL</th><th>Số lít cấp</th><th>Ngày tháng năm đi công tác</th><th>Nơi đi</th><th>Nơi đến</th><th>Nội dung công tác</th><th>Số LCT</th><th>Số PCT</th><th>Số PTT</th><th>Biển số xe</th><th>Số km - Đi</th><th>Số km - Về</th><th>Số Km hiện trường</th><th>Tổng số km vận chuyển</th><th>Số lít xăng</th><th>Đơn vị</th></tr></thead><tbody>`;
             
             for (const ma_nv in groupedData) {
                 const group = groupedData[ma_nv];
-                
-                html += `<tr style="background-color: #e3f2fd;">
-                    <td colspan="18" style="font-weight: bold; color: #0d47a1; font-size: 13px;">
-                        👤 ${group.ten_nv} (Mã NV: ${ma_nv}) — Biển số: ${group.bien_so || ''} — Đơn vị: ${group.don_vi || ''}
-                    </td>
-                </tr>`;
+                html += `<tr style="background-color: #e3f2fd;"><td colspan="18" style="font-weight: bold; color: #0d47a1; font-size: 13px;">👤 ${group.ten_nv} (Mã NV: ${ma_nv}) — Biển số: ${group.bien_so || ''} — Đơn vị: ${group.don_vi || ''}</td></tr>`;
                 
                 group.trips.forEach((trip, idx) => {
                     const kmDi = parseFloat(trip.km_di) || 0;
@@ -616,39 +604,64 @@
                     const kmHt = parseFloat(trip.km_ht) || 0;
                     const tongKm = (kmVe > kmDi) ? (kmVe - kmDi + kmHt) : kmHt;
 
-                    html += `<tr>
-                        <td style="text-align:center;">${idx + 1}</td>
-                        <td style="text-align:center;">${trip.so_phieu || ''}</td>
-                        <td style="text-align:center;">${formatShortDate(trip.ngay_cap)}</td>
-                        <td style="text-align:center;">${trip.lit_cap || ''}</td>
-                        <td style="text-align:center;">${formatShortDate(trip.ngay_di)}</td>
-                        <td>${trip.noi_di || ''}</td>
-                        <td>${trip.noi_den || ''}</td>
-                        <td>${trip.noi_dung || ''}</td>
-                        <td style="text-align:center;">${trip.so_lct || ''}</td>
-                        <td style="text-align:center;">${trip.so_pct || ''}</td>
-                        <td style="text-align:center;">${trip.so_ptt || ''}</td>
-                        <td style="text-align:center;">${trip.bien_so || ''}</td>
-                        <td style="text-align:center;">${trip.km_di || ''}</td>
-                        <td style="text-align:center;">${trip.km_ve || ''}</td>
-                        <td style="text-align:center;">${trip.km_ht || ''}</td>
-                        <td style="text-align:center; font-weight:bold;">${tongKm}</td>
-                        <td style="text-align:center; font-weight:bold;">${trip.lit_cap || ''}</td>
-                        <td style="text-align:center;">${trip.don_vi || ''}</td>
-                    </tr>`;
+                    html += `<tr><td style="text-align:center;">${idx + 1}</td><td style="text-align:center;">${trip.so_phieu || ''}</td><td style="text-align:center;">${formatShortDate(trip.ngay_cap)}</td><td style="text-align:center;">${trip.lit_cap || ''}</td><td style="text-align:center;">${formatShortDate(trip.ngay_di)}</td><td>${trip.noi_di || ''}</td><td>${trip.noi_den || ''}</td><td>${trip.noi_dung || ''}</td><td style="text-align:center;">${trip.so_lct || ''}</td><td style="text-align:center;">${trip.so_pct || ''}</td><td style="text-align:center;">${trip.so_ptt || ''}</td><td style="text-align:center;">${trip.bien_so || ''}</td><td style="text-align:center;">${trip.km_di || ''}</td><td style="text-align:center;">${trip.km_ve || ''}</td><td style="text-align:center;">${trip.km_ht || ''}</td><td style="text-align:center; font-weight:bold;">${tongKm}</td><td style="text-align:center; font-weight:bold;">${trip.lit_cap || ''}</td><td style="text-align:center;">${trip.don_vi || ''}</td></tr>`;
                 });
                 
                 let formattedLit = Number.isInteger(group.tong_lit) ? group.tong_lit : group.tong_lit.toFixed(1);
-                
-                html += `<tr style="background-color: #fff3e0; border-bottom: 2px solid #ccc; font-weight: bold;">
-                    <td colspan="15" style="text-align: right; padding-right: 10px;">
-                        Tổng cộng (${group.tong_phieu} phiếu):
-                    </td>
-                    <td style="text-align:center;">${group.tong_km}</td>
-                    <td style="text-align:center; color:#d93025; font-size: 14px;">${formattedLit}</td>
-                    <td></td>
-                </tr>`;
+                html += `<tr style="background-color: #fff3e0; border-bottom: 2px solid #ccc; font-weight: bold;"><td colspan="15" style="text-align: right; padding-right: 10px;">Tổng cộng (${group.tong_phieu} phiếu):</td><td style="text-align:center;">${group.tong_km}</td><td style="text-align:center; color:#d93025; font-size: 14px;">${formattedLit}</td><td></td></tr>`;
             }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Tải dữ liệu Bảng Quyết Toán
+        async function loadQuyetToan() {
+            const container = document.getElementById('quyettoan-list');
+            container.innerHTML = '<p style="text-align:center;">Đang tải dữ liệu quyết toán...</p>';
+            
+            showLoader();
+            const { data, error } = await supabaseClient.from('du_lieu').select('*').order('ngay_cap', { ascending: true }).order('id', { ascending: true });
+            hideLoader();
+
+            if (error) { showToast('Không thể tải quyết toán!', 'error'); return; }
+            if (data.length === 0) { container.innerHTML = '<p style="text-align:center;">Chưa có dữ liệu nào trong hệ thống.</p>'; return; }
+
+            let html = '<table class="dash-table qt-table">';
+            html += `<thead><tr>
+                <th>STT</th>
+                <th>Ngày, tháng cấp NL</th>
+                <th>Nội dung</th>
+                <th>Số lượng (lít)</th>
+                <th>Người nhận/Phương tiện</th>
+                <th>Đơn vị</th>
+            </tr></thead><tbody>`;
+            
+            let tong_lit = 0;
+
+            data.forEach((trip, idx) => {
+                let lit = parseFloat(trip.lit_cap) || 0;
+                tong_lit += lit;
+                
+                let nguoi_nhan = trip.ten_nv || '';
+                if (trip.bien_so) { nguoi_nhan += ` (${trip.bien_so})`; }
+
+                html += `<tr>
+                    <td style="text-align:center;">${idx + 1}</td>
+                    <td style="text-align:center;">${formatDateDMY(trip.ngay_cap)}</td>
+                    <td>${trip.noi_dung || ''}</td>
+                    <td style="text-align:center; font-weight:bold;">${trip.lit_cap || 0}</td>
+                    <td>${nguoi_nhan}</td>
+                    <td style="text-align:center;">${trip.don_vi || ''}</td>
+                </tr>`;
+            });
+            
+            let formattedTongLit = Number.isInteger(tong_lit) ? tong_lit : tong_lit.toFixed(1);
+            
+            html += `<tr style="background-color: #fff3e0; border-top: 2px solid #1a73e8; font-weight: bold;">
+                <td colspan="3" style="text-align: center; text-transform: uppercase;">Cộng</td>
+                <td style="text-align:center; color:#d93025; font-size: 15px;">${formattedTongLit}</td>
+                <td colspan="2"></td>
+            </tr>`;
             
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -659,24 +672,16 @@
             container.innerHTML = '<p style="text-align:center;">Đang tải...</p>';
             
             showLoader();
-            
             const { data: { user } } = await supabaseClient.auth.getUser();
             const userEmail = user ? user.email : '';
 
             let query = supabaseClient.from('du_lieu').select('*');
-            
-            if (userEmail !== ADMIN_EMAIL) {
-                query = query.eq('email_tao', userEmail);
-            }
+            if (userEmail !== ADMIN_EMAIL) { query = query.eq('email_tao', userEmail); }
 
             const { data, error } = await query.order('id', { ascending: false }).limit(40);
             hideLoader();
 
-            if (error) {
-                container.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu. Nhớ chạy mã SQL thêm cột email_tao nhé!</p>`;
-                showToast('Không thể tải lịch sử!', 'error');
-                return;
-            }
+            if (error) { showToast('Không thể tải lịch sử!', 'error'); return; }
 
             try {
                 const savedOrderStr = localStorage.getItem('history_order');
@@ -695,10 +700,7 @@
 
             historyData = data;
 
-            if (data.length === 0) {
-                container.innerHTML = '<p style="text-align:center;">Chưa có dữ liệu nào.</p>';
-                return;
-            }
+            if (data.length === 0) { container.innerHTML = '<p style="text-align:center;">Chưa có dữ liệu nào.</p>'; return; }
 
             container.innerHTML = '';
             data.forEach((item) => {
@@ -719,14 +721,9 @@
                 `;
             });
 
-            if (sortableInstance) {
-                sortableInstance.destroy();
-            }
+            if (sortableInstance) { sortableInstance.destroy(); }
             sortableInstance = Sortable.create(container, {
-                delay: 300,
-                delayOnTouchOnly: true,
-                animation: 150,
-                ghostClass: 'sortable-ghost',
+                delay: 300, delayOnTouchOnly: true, animation: 150, ghostClass: 'sortable-ghost',
                 onEnd: function () {
                     const items = container.querySelectorAll('.history-item');
                     const newOrder = Array.from(items).map(item => parseInt(item.getAttribute('data-id')));
@@ -741,13 +738,8 @@
                 showLoader();
                 const { error } = await supabaseClient.from('du_lieu').delete().eq('id', id);
                 hideLoader();
-
-                if(error) {
-                    showToast('Lỗi khi xóa: ' + error.message, 'error');
-                } else {
-                    showToast('Đã xóa dữ liệu thành công!', 'success');
-                    loadHistory();
-                }
+                if(error) { showToast('Lỗi khi xóa: ' + error.message, 'error'); } 
+                else { showToast('Đã xóa dữ liệu thành công!', 'success'); loadHistory(); }
             }
         }
 
@@ -757,13 +749,8 @@
                 showLoader();
                 const { error } = await supabaseClient.from('du_lieu').delete().eq('id', loadedRecordId);
                 hideLoader();
-
-                if(error) {
-                    showToast('Lỗi khi xóa: ' + error.message, 'error');
-                } else {
-                    showToast('Đã xóa phiếu thành công!', 'success');
-                    switchTab('form'); 
-                }
+                if(error) { showToast('Lỗi khi xóa: ' + error.message, 'error'); } 
+                else { showToast('Đã xóa phiếu thành công!', 'success'); switchTab('form'); }
             }
         }
 
@@ -817,7 +804,6 @@
             document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
             
             showFormUIOnly();
-            
             document.getElementById('btn-inline-edit').classList.remove('hidden');
             document.getElementById('btn-inline-delete').classList.remove('hidden');
         }
@@ -839,7 +825,6 @@
             document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
             
             showFormUIOnly();
-            
             document.getElementById('btn-inline-edit').classList.add('hidden');
             document.getElementById('btn-inline-delete').classList.remove('hidden');
         }
@@ -872,22 +857,17 @@
             if (!payload.ma_nv || !payload.ten_nv || !payload.don_vi || !payload.bien_so || 
                 !payload.so_phieu || !payload.ngay_cap || !payload.lit_cap ||
                 !payload.ngay_di || !payload.noi_di || !payload.noi_den || !payload.noi_dung) {
-                showToast("Lỗi: Vui lòng điền đầy đủ thông tin vào các ô có dấu * màu đỏ!", "error");
-                return;
+                showToast("Lỗi: Vui lòng điền đầy đủ thông tin vào các ô có dấu * màu đỏ!", "error"); return;
             }
 
             showLoader();
             let result;
-            if (currentEditId) {
-                result = await supabaseClient.from('du_lieu').update(payload).eq('id', currentEditId);
-            } else {
-                result = await supabaseClient.from('du_lieu').insert([payload]);
-            }
+            if (currentEditId) { result = await supabaseClient.from('du_lieu').update(payload).eq('id', currentEditId); } 
+            else { result = await supabaseClient.from('du_lieu').insert([payload]); }
             hideLoader();
 
-            if (result.error) {
-                showToast('Lỗi khi lưu: ' + result.error.message, 'error');
-            } else {
+            if (result.error) { showToast('Lỗi khi lưu: ' + result.error.message, 'error'); } 
+            else {
                 showToast(currentEditId ? 'Đã cập nhật phiếu thành công!' : 'Thành công! Dữ liệu đã được lưu mới.', 'success');
                 
                 currentEditId = null;
@@ -902,12 +882,8 @@
 
                 document.querySelectorAll('.data-input').forEach(input => {
                     const cb = document.getElementById('rem_' + input.id);
-                    if (cb && cb.checked) {
-                        localStorage.setItem("draft_" + input.id, input.value);
-                    } else {
-                        localStorage.removeItem("draft_" + input.id);
-                        input.value = '';
-                    }
+                    if (cb && cb.checked) { localStorage.setItem("draft_" + input.id, input.value); } 
+                    else { localStorage.removeItem("draft_" + input.id); input.value = ''; }
                 });
                 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
