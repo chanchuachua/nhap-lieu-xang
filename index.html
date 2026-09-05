@@ -96,7 +96,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.12)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.13)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -306,9 +306,7 @@
 
         const ADMIN_EMAIL = 'cloubleeyes@gmail.com'; 
 
-        // Biến lưu trữ dữ liệu tham chiếu tải từ Excel
         let MUC_DICH_THUE = {};
-
         let currentEditId = null;
         let loadedRecordId = null; 
         let historyData = [];
@@ -324,7 +322,7 @@
             toast.innerText = message;
             container.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
 
         function formatShortDate(dateStr) {
@@ -341,6 +339,46 @@
             return dateStr;
         }
 
+        // TẢI FILE EXCEL THAM CHIẾU VỚI CƠ CHẾ CHỐNG LỖI CẢI TIẾN
+        async function loadThamChieuExcel() {
+            try {
+                // Thêm "?v=..." để chống trình duyệt lưu bộ nhớ đệm (cache) bản cũ
+                const response = await fetch('Danh_Sach_Xe.xlsx?v=' + new Date().getTime());
+                if (!response.ok) throw new Error("Không thể tải file qua mạng.");
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const data = new Uint8Array(arrayBuffer);
+                const workbook = XLSX.read(data, {type: 'array'});
+                
+                // Lấy sheet đầu tiên hoặc sheet chứa chữ Danh_Sach_Xe / Muc Dich Thue
+                let sheetName = workbook.SheetNames[0];
+                if (workbook.SheetNames.includes('Muc Dich Thue')) sheetName = 'Muc Dich Thue';
+                else if (workbook.SheetNames.includes('Danh_Sach_Xe')) sheetName = 'Danh_Sach_Xe';
+                
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {range: 2});
+                
+                jsonData.forEach(row => {
+                    // Quét mọi trường hợp tiêu đề có khoảng trắng thừa
+                    let ma_nv = row['Mã NV'] || row['Mã NV '] || row[' Mã NV'] || row['Mã nhân viên'];
+                    if(ma_nv) {
+                        MUC_DICH_THUE[String(ma_nv).trim()] = {
+                            ten_nv: row['Tên CBCNV'] || row['Tên CBCNV '] || '',
+                            don_vi: row['Đơn vị'] || row['Đơn vị '] || '',
+                            muc_dich: row['Mục đích thuê'] || row['Mục đích thuê '] || ''
+                        };
+                    }
+                });
+                console.log("Đã tải Dữ liệu tham chiếu thành công!");
+            } catch (error) {
+                console.warn(error);
+                // Báo lỗi đỏ lên màn hình sau 1.5 giây nếu file bị chặn
+                setTimeout(() => {
+                    showToast("CẢNH BÁO: Chưa tải được file Danh_Sach_Xe.xlsx! Hãy đảm bảo bạn đã đẩy file lên GitHub và truy cập bằng link web (không mở trực tiếp trên máy).", "error");
+                }, 1500);
+            }
+        }
+
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
             if (event === 'PASSWORD_RECOVERY') {
                 document.getElementById('login-form').classList.add('hidden');
@@ -349,44 +387,8 @@
             }
         });
 
-        // Hàm tải file Danh_Sach_Xe.xlsx từ GitHub
-        async function loadThamChieuExcel() {
-            try {
-                // Tải file từ cùng thư mục trên GitHub
-                const response = await fetch('Danh_Sach_Xe.xlsx');
-                if (!response.ok) throw new Error("Không tìm thấy file");
-                
-                const arrayBuffer = await response.arrayBuffer();
-                const data = new Uint8Array(arrayBuffer);
-                const workbook = XLSX.read(data, {type: 'array'});
-                
-                // Tìm sheet tên 'Muc Dich Thue' hoặc lấy sheet đầu tiên
-                const sheetName = workbook.SheetNames.includes('Muc Dich Thue') ? 'Muc Dich Thue' : workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                
-                // Bỏ qua 2 dòng tiêu đề rác trên cùng
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, {range: 2});
-                
-                jsonData.forEach(row => {
-                    let ma_nv = row['Mã NV'];
-                    if(ma_nv) {
-                        MUC_DICH_THUE[String(ma_nv).trim()] = {
-                            ten_nv: row['Tên CBCNV'] || '',
-                            don_vi: row['Đơn vị'] || '',
-                            muc_dich: row['Mục đích thuê'] || ''
-                        };
-                    }
-                });
-                console.log("Đã tải xong dữ liệu tham chiếu từ Excel.");
-            } catch (error) {
-                console.warn("Chưa tải được Danh_Sach_Xe.xlsx:", error);
-            }
-        }
-
         window.onload = function() {
-            // Khởi động tải file tham chiếu chạy ngầm
-            loadThamChieuExcel();
-
+            loadThamChieuExcel(); // Gọi hàm nạp dữ liệu tham chiếu
             if (localStorage.getItem("savedEmail")) {
                 document.getElementById('email').value = localStorage.getItem("savedEmail");
                 document.getElementById('pass').value = localStorage.getItem("savedPass");
@@ -690,10 +692,13 @@
                 let nguoi_nhan = "";
                 let donvi = "";
 
-                if (MUC_DICH_THUE[ma_nv]) {
-                    noidung = MUC_DICH_THUE[ma_nv].muc_dich;
-                    nguoi_nhan = MUC_DICH_THUE[ma_nv].ten_nv;
-                    donvi = MUC_DICH_THUE[ma_nv].don_vi;
+                // Loại bỏ khoảng trắng thừa để đối chiếu chính xác
+                let nv_key = String(ma_nv).trim();
+
+                if (MUC_DICH_THUE[nv_key]) {
+                    noidung = MUC_DICH_THUE[nv_key].muc_dich;
+                    nguoi_nhan = MUC_DICH_THUE[nv_key].ten_nv;
+                    donvi = MUC_DICH_THUE[nv_key].don_vi;
                 } else {
                     noidung = "Không tìm thấy tham chiếu";
                     nguoi_nhan = p.ten_goc;
