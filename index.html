@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Người Sở Hữu: Chan Canh Chua (C3)</title>
     
-    <!-- Các thư viện cần thiết -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script> <!-- Thư viện xuất Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 12px; max-width: 550px; margin: auto; background-color: #f0f2f5; color: #333; }
@@ -71,7 +70,6 @@
         .toast-success { background-color: #10b981; }
         .toast-error { background-color: #ef4444; }
 
-        /* Bảng hiển thị Dashboard hỗ trợ cuộn và dính Tiêu đề */
         #dashboard-list { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
         .dash-table { width: 100%; border-collapse: collapse; margin-top: 0px; font-size: 12px; }
         .dash-table th, .dash-table td { border: 1px solid #ccc; padding: 6px 4px; text-align: left; }
@@ -95,13 +93,13 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.05)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.08)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
             </div>
             <div class="input-wrapper">
-                <input type="password" id="pass" placeholder="Mật khẩu">
+                <input type="password" id="pass" placeholder="Mật khẩu (tối thiểu 6 ký tự)">
                 <span class="toggle-pw" onclick="togglePassword('pass')">👁️</span>
             </div>
             <label class="remember-cb" style="margin-top: 10px; justify-content: flex-start;">
@@ -109,6 +107,7 @@
             </label>
             <button onclick="login()">Đăng Nhập</button>
             <button class="btn-signup" onclick="signup()">Tạo Tài Khoản Mới</button>
+            <p class="note-text" style="color: #555; margin-bottom: 4px;">*Lưu ý: Có thể sử dụng email không có thật để đăng ký, nhưng khi quên sẽ không thể lấy lại mật khẩu.</p>
             <p class="note-text">*Lưu ý: Vui lòng đợi khoảng 5 phút sau khi tạo tài khoản để hệ thống ghi nhận trước khi Đăng Nhập.</p>
             <a href="#" class="forgot-link" onclick="forgotPassword()">Quên mật khẩu?</a>
         </div>
@@ -135,7 +134,6 @@
             <button id="tab-dashboard" class="hidden" onclick="switchTab('dashboard')">📊 Tổng Hợp</button>
         </div>
 
-        <!-- Tab Tổng hợp -->
         <div id="dashboard-view" class="hidden">
             <div class="group">
                 <div class="group-header">
@@ -163,7 +161,6 @@
             </div>
         </div>
 
-        <!-- Form Nhập liệu -->
         <div id="data-form">
             <div class="group">
                 <div class="group-header edit-target">
@@ -288,10 +285,11 @@
         const SUPABASE_KEY = 'sb_publishable_58O7qBE7jTdCxveWzKjttw_d60MBwrr';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // THAY ĐỔI EMAIL CỦA BẠN VÀO ĐÂY ĐỂ ĐƯỢC CẤP QUYỀN XEM BÁO CÁO TỔNG HỢP
         const ADMIN_EMAIL = 'cloubleeyes@gmail.com'; 
 
         let currentEditId = null;
-        let loadedRecordId = null; // Biến lưu ID phiếu đang mở để xóa nhanh
+        let loadedRecordId = null; 
         let historyData = [];
         let sortableInstance = null; 
 
@@ -350,7 +348,7 @@
             const pass = document.getElementById('pass').value;
 
             if (!email || pass.length < 6) {
-                showToast("Vui lòng điền Email và Mật khẩu (tối thiểu 6 ký tự) để đăng ký!", "error");
+                showToast("Lỗi: Vui lòng điền Email và Mật khẩu (tối thiểu 6 ký tự) để đăng ký!", "error");
                 return;
             }
 
@@ -419,8 +417,6 @@
         function switchTab(tab) {
             if(tab === 'form') {
                 showFormUIOnly();
-                
-                // Khi bấm tab Nhập Mới thủ công, reset mọi trạng thái về nhập mới
                 currentEditId = null;
                 loadedRecordId = null;
                 const btnSave = document.getElementById('btn-save');
@@ -509,20 +505,18 @@
             }
         }
 
-        // TÍNH NĂNG XUẤT EXCEL BẰNG JAVASCRIPT
         function exportExcel() {
             try {
                 let table = document.querySelector('.dash-table');
                 if(!table) {
                     showToast("Không có dữ liệu để xuất!", "error");
                     return;
-            }
+                }
                 showLoader();
                 let cloneTable = table.cloneNode(true);
                 let wb = XLSX.utils.book_new();
                 let ws = XLSX.utils.table_to_sheet(cloneTable);
                 
-                // Chỉnh độ rộng cột cho đẹp
                 const wscols = [
                     {wch: 5}, {wch: 15}, {wch: 15}, {wch: 10}, {wch: 15},
                     {wch: 15}, {wch: 15}, {wch: 25}, {wch: 10}, {wch: 10},
@@ -666,11 +660,23 @@
             container.innerHTML = '<p style="text-align:center;">Đang tải...</p>';
             
             showLoader();
-            const { data, error } = await supabaseClient.from('du_lieu').select('*').order('id', { ascending: false }).limit(20);
+            
+            // Lấy email người đang đăng nhập
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            const userEmail = user ? user.email : '';
+
+            let query = supabaseClient.from('du_lieu').select('*');
+            
+            // Nếu KHÔNG phải Admin thì chỉ tải những phiếu do chính email này tạo
+            if (userEmail !== ADMIN_EMAIL) {
+                query = query.eq('email_tao', userEmail);
+            }
+
+            const { data, error } = await query.order('id', { ascending: false }).limit(20);
             hideLoader();
 
             if (error) {
-                container.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu.</p>`;
+                container.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu. Nhớ chạy mã SQL thêm cột email_tao nhé!</p>`;
                 showToast('Không thể tải lịch sử!', 'error');
                 return;
             }
@@ -748,7 +754,6 @@
             }
         }
 
-        // TÍNH NĂNG XÓA VÀ SỬA NGAY TẠI FORM
         async function inlineDelete() {
             if (!loadedRecordId) return;
             if(confirm("Bạn có chắc chắn muốn xóa vĩnh viễn phiếu này không?")) {
@@ -760,7 +765,7 @@
                     showToast('Lỗi khi xóa: ' + error.message, 'error');
                 } else {
                     showToast('Đã xóa phiếu thành công!', 'success');
-                    switchTab('form'); // Reset lại toàn bộ form trống
+                    switchTab('form'); 
                 }
             }
         }
@@ -805,7 +810,7 @@
             fillForm(item);
             
             currentEditId = null;
-            loadedRecordId = id; // Ghi nhớ ID đang mở
+            loadedRecordId = id; 
             
             const btnSave = document.getElementById('btn-save');
             btnSave.innerText = "Lưu Phiếu Mới";
@@ -843,6 +848,10 @@
         }
 
         async function saveData() {
+            // Lấy email hiện tại để gán vào phiếu
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            const userEmail = user ? user.email : '';
+
             const payload = {
                 ma_nv: document.getElementById('ma_nv').value,
                 ten_nv: document.getElementById('ten_nv').value,
@@ -860,7 +869,8 @@
                 so_ptt: document.getElementById('so_ptt').value,
                 km_di: document.getElementById('km_di').value,
                 km_ve: document.getElementById('km_ve').value,
-                km_ht: document.getElementById('km_ht').value
+                km_ht: document.getElementById('km_ht').value,
+                email_tao: userEmail
             };
 
             if (!payload.ma_nv || !payload.ten_nv || !payload.don_vi || !payload.bien_so || 
@@ -884,7 +894,6 @@
             } else {
                 showToast(currentEditId ? 'Đã cập nhật phiếu thành công!' : 'Thành công! Dữ liệu đã được lưu mới.', 'success');
                 
-                // Đưa form về lại trạng thái chuẩn
                 currentEditId = null;
                 loadedRecordId = null;
                 const btnSave = document.getElementById('btn-save');
