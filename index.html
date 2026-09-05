@@ -63,10 +63,10 @@
         .toast-success { background-color: #10b981; }
         .toast-error { background-color: #ef4444; }
 
-        /* Bảng hiển thị Dashboard */
-        .dash-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        .dash-table th, .dash-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .dash-table th { background-color: #f0f2f5; color: #1a73e8; white-space: nowrap; }
+        /* Bảng hiển thị Dashboard chi tiết */
+        .dash-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        .dash-table th, .dash-table td { border: 1px solid #ddd; padding: 8px 5px; text-align: left; }
+        .dash-table th { background-color: #f0f2f5; color: #1a73e8; text-align: center; }
     </style>
 </head>
 <body>
@@ -118,7 +118,7 @@
         <div class="nav-tabs">
             <button id="tab-form" class="active" onclick="switchTab('form')">📝 Nhập Mới</button>
             <button id="tab-history" onclick="switchTab('history')">🕒 Lịch Sử</button>
-            <button id="tab-dashboard" class="hidden" onclick="switchTab('dashboard')">📊 Báo Cáo</button>
+            <button id="tab-dashboard" class="hidden" onclick="switchTab('dashboard')">📊 Tổng Hợp</button>
         </div>
 
         <div id="dashboard-view" class="hidden">
@@ -289,6 +289,14 @@
             }, 3000);
         }
 
+        // Hàm hỗ trợ đổi định dạng "YYYY-MM-DD" sang "DD/MM" cho gọn bảng
+        function formatShortDate(dateStr) {
+            if(!dateStr) return '';
+            const parts = dateStr.split('-');
+            if(parts.length === 3) return `${parts[2]}/${parts[1]}`;
+            return dateStr;
+        }
+
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
             if (event === 'PASSWORD_RECOVERY') {
                 document.getElementById('login-form').classList.add('hidden');
@@ -439,7 +447,6 @@
                     localStorage.removeItem("savedPass");
                 }
                 
-                // Cấp quyền Admin hiển thị Tab Báo cáo
                 if (email === ADMIN_EMAIL) {
                     document.getElementById('tab-dashboard').classList.remove('hidden');
                 } else {
@@ -450,17 +457,17 @@
                 document.getElementById('login-form').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 
-                // Reset về tab form mặc định
                 switchTab('form');
             }
         }
 
         async function loadDashboard() {
             const container = document.getElementById('dashboard-list');
-            container.innerHTML = '<p style="text-align:center;">Đang tính toán dữ liệu...</p>';
+            container.innerHTML = '<p style="text-align:center;">Đang tổng hợp dữ liệu...</p>';
             
             showLoader();
-            const { data, error } = await supabaseClient.from('bang_tong_hop').select('*');
+            // Lấy toàn bộ dữ liệu gốc từ du_lieu, sắp xếp theo nhân viên và ngày đi
+            const { data, error } = await supabaseClient.from('du_lieu').select('*').order('ma_nv').order('ngay_di', { ascending: true });
             hideLoader();
 
             if (error) {
@@ -474,17 +481,57 @@
                 return;
             }
 
-            let html = '<table class="dash-table">';
-            html += '<tr><th>Mã NV</th><th>Tên NV</th><th>Số Phiếu</th><th>Tổng Lít</th></tr>';
-            
+            // Gom nhóm dữ liệu theo từng nhân viên (Mã NV)
+            const groupedData = {};
             data.forEach(row => {
-                html += `<tr>
-                    <td>${row.ma_nv}</td>
-                    <td>${row.ten_nv || ''}</td>
-                    <td style="text-align:center;">${row.tong_so_chuyen}</td>
-                    <td style="text-align:center; color:#d93025; font-weight:bold;">${row.tong_lit_cap || 0}</td>
-                </tr>`;
+                if (!groupedData[row.ma_nv]) {
+                    groupedData[row.ma_nv] = {
+                        ten_nv: row.ten_nv || 'Chưa rõ',
+                        trips: [],
+                        tong_lit: 0,
+                        tong_chuyen: 0
+                    };
+                }
+                groupedData[row.ma_nv].trips.push(row);
+                groupedData[row.ma_nv].tong_chuyen += 1;
+                groupedData[row.ma_nv].tong_lit += parseFloat(row.lit_cap || 0);
             });
+
+            let html = '<table class="dash-table">';
+            html += '<tr><th>Ngày</th><th>Nội dung</th><th>Số Phiếu</th><th>Lít</th></tr>';
+            
+            for (const ma_nv in groupedData) {
+                const group = groupedData[ma_nv];
+                
+                // Dòng 1: Header tên người dùng
+                html += `<tr style="background-color: #e3f2fd;">
+                    <td colspan="4" style="font-weight: bold; color: #0d47a1; font-size: 14px;">
+                        👤 ${group.ten_nv} (${ma_nv})
+                    </td>
+                </tr>`;
+                
+                // Dòng 2: Chi tiết các chuyến đi
+                group.trips.forEach(trip => {
+                    html += `<tr>
+                        <td style="white-space: nowrap; text-align:center;">${formatShortDate(trip.ngay_di)}</td>
+                        <td>${trip.noi_dung || trip.noi_den || ''}</td>
+                        <td style="text-align:center;">${trip.so_phieu || ''}</td>
+                        <td style="text-align:center; font-weight:bold;">${trip.lit_cap || ''}</td>
+                    </tr>`;
+                });
+                
+                // Dòng 3: Dòng tổng cộng cuối mỗi người
+                let formattedLit = Number.isInteger(group.tong_lit) ? group.tong_lit : group.tong_lit.toFixed(1);
+                
+                html += `<tr style="background-color: #fff3e0; border-bottom: 2px solid #ccc;">
+                    <td colspan="3" style="text-align: right; padding-right: 10px; font-weight: bold; font-size: 14px;">
+                        Tổng (${group.tong_chuyen} chuyến):
+                    </td>
+                    <td style="text-align:center; color:#d93025; font-weight: bold; font-size: 15px;">
+                        ${formattedLit}
+                    </td>
+                </tr>`;
+            }
             
             html += '</table>';
             container.innerHTML = html;
