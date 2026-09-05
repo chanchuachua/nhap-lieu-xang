@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Người Sở Hữu: Chan Canh Chua (C3)</title>
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Thư viện Kéo thả -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 12px; max-width: 550px; margin: auto; background-color: #f0f2f5; color: #333; }
         .hidden { display: none !important; }
@@ -42,11 +46,13 @@
         .nav-tabs button { margin-top: 0; padding: 10px; background: #e0e0e0; color: #333; transition: 0.3s; }
         .nav-tabs button.active { background: #1a73e8; color: white; }
         
-        .history-item { padding: 12px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff; cursor: pointer; border-left: 4px solid #1a73e8; position: relative; }
+        /* Cấu hình thêm thuộc tính kéo thả cho Lịch sử */
+        .history-item { padding: 12px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff; cursor: pointer; border-left: 4px solid #1a73e8; position: relative; user-select: none; -webkit-user-select: none; }
         .history-item:active { background: #f0f2f5; }
         .history-title { font-weight: bold; color: #1a73e8; margin-bottom: 4px; display: block;}
         .history-desc { font-size: 14px; color: #555; }
         .btn-delete { color: #dc3545; font-size: 16px; cursor: pointer; padding: 5px; user-select: none; }
+        .sortable-ghost { opacity: 0.5; background-color: #e3f2fd; border: 2px dashed #1a73e8; } /* Giao diện khi đang kéo */
 
         /* Màn hình chờ (Loader) */
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; }
@@ -122,6 +128,7 @@
                     <h3>20 chuyến đi gần nhất</h3>
                     <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
                 </div>
+                <!-- Vùng chứa danh sách Lịch sử hỗ trợ kéo thả -->
                 <div id="history-list">
                     <p style="text-align:center; color:#666;">Đang tải dữ liệu...</p>
                 </div>
@@ -251,6 +258,7 @@
 
         let currentEditId = null;
         let historyData = [];
+        let sortableInstance = null; // Biến lưu trữ đối tượng kéo thả
 
         function showLoader() { document.getElementById('loader').classList.remove('hidden'); }
         function hideLoader() { document.getElementById('loader').classList.add('hidden'); }
@@ -371,7 +379,6 @@
                 document.getElementById('history-view').classList.add('hidden');
                 
                 if(currentEditId) {
-                    // Nếu đang từ Lịch sử chuyển sang Nhập mới -> giữ nguyên toàn bộ chữ
                     currentEditId = null;
                     document.getElementById('btn-save').innerText = "Lưu Phiếu Mới";
                 }
@@ -456,6 +463,17 @@
                         </div>
                     </div>
                 `;
+            });
+
+            // Kích hoạt tính năng kéo thả
+            if (sortableInstance) {
+                sortableInstance.destroy();
+            }
+            sortableInstance = Sortable.create(container, {
+                delay: 300, // Nhấn giữ 300ms mới bắt đầu kéo 
+                delayOnTouchOnly: true, // Chỉ áp dụng delay trên điện thoại cảm ứng
+                animation: 150, // Hiệu ứng kéo mượt mà
+                ghostClass: 'sortable-ghost' // Lớp CSS khi thẻ đang bị kéo lên
             });
         }
 
