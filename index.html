@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Người Sở Hữu: Chan Canh Chua (C3)</title>
+    
+    <!-- Các thư viện cần thiết -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script> <!-- Thư viện xuất Excel -->
     
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 12px; max-width: 550px; margin: auto; background-color: #f0f2f5; color: #333; }
@@ -24,7 +27,6 @@
         button.btn-signup { background: #28a745; margin-top: 12px; }
         button.btn-signup:active { background: #218838; }
         
-        /* Đổi màu nút lưu khi ở chế độ sửa */
         button#btn-save.edit-mode-btn { background: #d97706; }
         button#btn-save.edit-mode-btn:active { background: #b45309; }
 
@@ -69,9 +71,15 @@
         .toast-success { background-color: #10b981; }
         .toast-error { background-color: #ef4444; }
 
-        .dash-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        /* Bảng hiển thị Dashboard hỗ trợ cuộn và dính Tiêu đề */
+        #dashboard-list { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
+        .dash-table { width: 100%; border-collapse: collapse; margin-top: 0px; font-size: 12px; }
         .dash-table th, .dash-table td { border: 1px solid #ccc; padding: 6px 4px; text-align: left; }
-        .dash-table th { background-color: #e9ecef; color: #1a73e8; text-align: center; font-weight: bold; white-space: nowrap; }
+        .dash-table th { 
+            background-color: #e9ecef; color: #1a73e8; text-align: center; font-weight: bold; 
+            white-space: nowrap; position: sticky; top: 0; z-index: 10;
+            box-shadow: 0 2px 2px -1px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
@@ -87,7 +95,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.04)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.05)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -127,13 +135,17 @@
             <button id="tab-dashboard" class="hidden" onclick="switchTab('dashboard')">📊 Tổng Hợp</button>
         </div>
 
+        <!-- Tab Tổng hợp -->
         <div id="dashboard-view" class="hidden">
             <div class="group">
                 <div class="group-header">
                     <h3>Bảng Tổng Hợp Xăng (Bang TH)</h3>
-                    <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-logout" onclick="exportExcel()" style="background-color: #28a745; color: white;">📥 Xuất Excel</button>
+                        <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
+                    </div>
                 </div>
-                <div id="dashboard-list" style="overflow-x: auto; max-width: 100%;">
+                <div id="dashboard-list">
                     <p style="text-align:center; color:#666;">Đang tải dữ liệu...</p>
                 </div>
             </div>
@@ -151,11 +163,16 @@
             </div>
         </div>
 
+        <!-- Form Nhập liệu -->
         <div id="data-form">
             <div class="group">
                 <div class="group-header edit-target">
                     <h3>1. Người đi & Phương tiện</h3>
-                    <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btn-inline-edit" class="btn-logout hidden" onclick="inlineEdit()" style="background-color: #d97706; color: white;">✏️ Sửa</button>
+                        <button id="btn-inline-delete" class="btn-logout hidden" onclick="inlineDelete()" style="background-color: #dc3545; color: white;">❌ Xóa</button>
+                        <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
+                    </div>
                 </div>
                 <label class="title">Mã nhân viên: <span class="req">*</span></label>
                 <div class="input-row">
@@ -271,10 +288,10 @@
         const SUPABASE_KEY = 'sb_publishable_58O7qBE7jTdCxveWzKjttw_d60MBwrr';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // THAY ĐỔI EMAIL CỦA BẠN VÀO ĐÂY ĐỂ ĐƯỢC CẤP QUYỀN XEM BÁO CÁO TỔNG HỢP
         const ADMIN_EMAIL = 'cloubleeyes@gmail.com'; 
 
         let currentEditId = null;
+        let loadedRecordId = null; // Biến lưu ID phiếu đang mở để xóa nhanh
         let historyData = [];
         let sortableInstance = null; 
 
@@ -388,7 +405,6 @@
             }
         }
 
-        // Hàm hỗ trợ để chuyển sang tab form mà không làm mất trạng thái
         function showFormUIOnly() {
             document.getElementById('tab-form').classList.add('active');
             document.getElementById('tab-history').classList.remove('active');
@@ -404,8 +420,9 @@
             if(tab === 'form') {
                 showFormUIOnly();
                 
-                // Nếu bấm tab Nhập Mới thủ công, reset về chế độ tạo mới
+                // Khi bấm tab Nhập Mới thủ công, reset mọi trạng thái về nhập mới
                 currentEditId = null;
+                loadedRecordId = null;
                 const btnSave = document.getElementById('btn-save');
                 btnSave.innerText = "Lưu Phiếu Mới";
                 btnSave.classList.remove('edit-mode-btn');
@@ -413,7 +430,9 @@
                 document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
                 document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
                 
-                // Khôi phục bản nháp
+                document.getElementById('btn-inline-edit').classList.add('hidden');
+                document.getElementById('btn-inline-delete').classList.add('hidden');
+                
                 document.querySelectorAll('.data-input').forEach(input => {
                     const cb = document.getElementById('rem_' + input.id);
                     if (cb && cb.checked) {
@@ -487,6 +506,40 @@
                 document.getElementById('app-container').classList.remove('hidden');
                 
                 switchTab('form');
+            }
+        }
+
+        // TÍNH NĂNG XUẤT EXCEL BẰNG JAVASCRIPT
+        function exportExcel() {
+            try {
+                let table = document.querySelector('.dash-table');
+                if(!table) {
+                    showToast("Không có dữ liệu để xuất!", "error");
+                    return;
+            }
+                showLoader();
+                let cloneTable = table.cloneNode(true);
+                let wb = XLSX.utils.book_new();
+                let ws = XLSX.utils.table_to_sheet(cloneTable);
+                
+                // Chỉnh độ rộng cột cho đẹp
+                const wscols = [
+                    {wch: 5}, {wch: 15}, {wch: 15}, {wch: 10}, {wch: 15},
+                    {wch: 15}, {wch: 15}, {wch: 25}, {wch: 10}, {wch: 10},
+                    {wch: 10}, {wch: 15}, {wch: 10}, {wch: 10}, {wch: 15},
+                    {wch: 15}, {wch: 10}, {wch: 15}
+                ];
+                ws['!cols'] = wscols;
+
+                XLSX.utils.book_append_sheet(wb, ws, "Bang TH");
+                XLSX.writeFile(wb, "Bang_Tong_Hop_Xang.xlsx");
+                
+                hideLoader();
+                showToast("Xuất Excel thành công!", "success");
+            } catch(err) {
+                hideLoader();
+                console.error(err);
+                showToast("Lỗi xuất Excel: " + err.message, "error");
             }
         }
 
@@ -646,7 +699,6 @@
 
             container.innerHTML = '';
             data.forEach((item) => {
-                // Thêm nút Cây bút chì để sửa, còn click vào ngoài để Nhân bản
                 container.innerHTML += `
                     <div class="history-item" data-id="${item.id}" onclick="cloneRecord(${item.id})">
                         <div style="display:flex; justify-content: space-between; align-items: center;">
@@ -696,7 +748,37 @@
             }
         }
 
-        // Đổ dữ liệu dùng chung cho cả Clone và Edit
+        // TÍNH NĂNG XÓA VÀ SỬA NGAY TẠI FORM
+        async function inlineDelete() {
+            if (!loadedRecordId) return;
+            if(confirm("Bạn có chắc chắn muốn xóa vĩnh viễn phiếu này không?")) {
+                showLoader();
+                const { error } = await supabaseClient.from('du_lieu').delete().eq('id', loadedRecordId);
+                hideLoader();
+
+                if(error) {
+                    showToast('Lỗi khi xóa: ' + error.message, 'error');
+                } else {
+                    showToast('Đã xóa phiếu thành công!', 'success');
+                    switchTab('form'); // Reset lại toàn bộ form trống
+                }
+            }
+        }
+
+        function inlineEdit() {
+            if (!loadedRecordId) return;
+            currentEditId = loadedRecordId;
+            const btnSave = document.getElementById('btn-save');
+            btnSave.innerText = "Cập Nhật Dữ Liệu";
+            btnSave.classList.add('edit-mode-btn');
+            
+            document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
+            document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
+            
+            document.getElementById('btn-inline-edit').classList.add('hidden');
+            showToast("Đã chuyển sang chế độ Sửa Phiếu!", "success");
+        }
+
         function fillForm(item) {
             document.getElementById('ma_nv').value = item.ma_nv || '';
             document.getElementById('ten_nv').value = item.ten_nv || '';
@@ -717,13 +799,14 @@
             document.getElementById('km_ht').value = item.km_ht || '';
         }
 
-        // Chế độ Nhân Bản (Tạo mới)
         function cloneRecord(id) {
             const item = historyData.find(d => d.id === id);
             if(!item) return;
             fillForm(item);
             
             currentEditId = null;
+            loadedRecordId = id; // Ghi nhớ ID đang mở
+            
             const btnSave = document.getElementById('btn-save');
             btnSave.innerText = "Lưu Phiếu Mới";
             btnSave.classList.remove('edit-mode-btn');
@@ -732,16 +815,20 @@
             document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
             
             showFormUIOnly();
+            
+            document.getElementById('btn-inline-edit').classList.remove('hidden');
+            document.getElementById('btn-inline-delete').classList.remove('hidden');
         }
 
-        // Chế độ Cập nhật (Sửa)
         function editRecord(event, id) {
-            event.stopPropagation(); // Ngăn kích hoạt cloneRecord khi bấm vào cây bút
+            event.stopPropagation(); 
             const item = historyData.find(d => d.id === id);
             if(!item) return;
             fillForm(item);
             
             currentEditId = item.id;
+            loadedRecordId = item.id;
+            
             const btnSave = document.getElementById('btn-save');
             btnSave.innerText = "Cập Nhật Dữ Liệu";
             btnSave.classList.add('edit-mode-btn');
@@ -750,6 +837,9 @@
             document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
             
             showFormUIOnly();
+            
+            document.getElementById('btn-inline-edit').classList.add('hidden');
+            document.getElementById('btn-inline-delete').classList.remove('hidden');
         }
 
         async function saveData() {
@@ -794,14 +884,16 @@
             } else {
                 showToast(currentEditId ? 'Đã cập nhật phiếu thành công!' : 'Thành công! Dữ liệu đã được lưu mới.', 'success');
                 
-                if(currentEditId) {
-                    currentEditId = null;
-                    const btnSave = document.getElementById('btn-save');
-                    btnSave.innerText = "Lưu Phiếu Mới";
-                    btnSave.classList.remove('edit-mode-btn');
-                    document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
-                    document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
-                }
+                // Đưa form về lại trạng thái chuẩn
+                currentEditId = null;
+                loadedRecordId = null;
+                const btnSave = document.getElementById('btn-save');
+                btnSave.innerText = "Lưu Phiếu Mới";
+                btnSave.classList.remove('edit-mode-btn');
+                document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
+                document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
+                document.getElementById('btn-inline-edit').classList.add('hidden');
+                document.getElementById('btn-inline-delete').classList.add('hidden');
 
                 document.querySelectorAll('.data-input').forEach(input => {
                     const cb = document.getElementById('rem_' + input.id);
