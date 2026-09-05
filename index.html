@@ -47,7 +47,6 @@
         
         h2 { font-size: 18px; text-align: center; margin-top: 5px; margin-bottom: 20px; color: #222; }
         
-        /* Cập nhật tabs để vừa 4 nút trên điện thoại */
         .nav-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
         .nav-tabs button { flex: 1; margin-top: 0; padding: 10px 2px; font-size: 13px; background: #e0e0e0; color: #333; transition: 0.3s; white-space: nowrap; border-radius: 6px; }
         .nav-tabs button.active { background: #1a73e8; color: white; }
@@ -74,7 +73,6 @@
         .toast-success { background-color: #10b981; }
         .toast-error { background-color: #ef4444; }
 
-        /* Bảng hiển thị Dashboard và Quyết Toán (Dính Tiêu đề) */
         #dashboard-list, #quyettoan-list { max-height: 65vh; overflow-y: auto; overflow-x: auto; }
         .dash-table { width: 100%; border-collapse: collapse; margin-top: 0px; font-size: 12px; }
         .dash-table th, .dash-table td { border: 1px solid #ccc; padding: 6px 4px; text-align: left; }
@@ -98,7 +96,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.10)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.12)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -140,7 +138,6 @@
             <button id="tab-quyettoan" class="hidden" onclick="switchTab('quyettoan')">🧮 Quyết Toán</button>
         </div>
 
-        <!-- BẢNG TỔNG HỢP -->
         <div id="dashboard-view" class="hidden">
             <div class="group">
                 <div class="group-header">
@@ -156,7 +153,6 @@
             </div>
         </div>
 
-        <!-- BẢNG QUYẾT TOÁN -->
         <div id="quyettoan-view" class="hidden">
             <div class="group">
                 <div class="group-header">
@@ -172,7 +168,6 @@
             </div>
         </div>
 
-        <!-- LỊCH SỬ -->
         <div id="history-view" class="hidden">
             <div class="group">
                 <div class="group-header">
@@ -185,7 +180,6 @@
             </div>
         </div>
 
-        <!-- FORM NHẬP -->
         <div id="data-form">
             <div class="group">
                 <div class="group-header edit-target">
@@ -312,6 +306,9 @@
 
         const ADMIN_EMAIL = 'cloubleeyes@gmail.com'; 
 
+        // Biến lưu trữ dữ liệu tham chiếu tải từ Excel
+        let MUC_DICH_THUE = {};
+
         let currentEditId = null;
         let loadedRecordId = null; 
         let historyData = [];
@@ -330,7 +327,6 @@
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
-        // Định dạng DD/MM (Dùng cho Tổng Hợp)
         function formatShortDate(dateStr) {
             if(!dateStr) return '';
             const parts = dateStr.split('-');
@@ -338,7 +334,6 @@
             return dateStr;
         }
 
-        // Định dạng DD/MM/YYYY (Dùng cho Quyết Toán)
         function formatDateDMY(dateStr) {
             if(!dateStr) return '';
             const parts = dateStr.split('-');
@@ -354,7 +349,44 @@
             }
         });
 
+        // Hàm tải file Danh_Sach_Xe.xlsx từ GitHub
+        async function loadThamChieuExcel() {
+            try {
+                // Tải file từ cùng thư mục trên GitHub
+                const response = await fetch('Danh_Sach_Xe.xlsx');
+                if (!response.ok) throw new Error("Không tìm thấy file");
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const data = new Uint8Array(arrayBuffer);
+                const workbook = XLSX.read(data, {type: 'array'});
+                
+                // Tìm sheet tên 'Muc Dich Thue' hoặc lấy sheet đầu tiên
+                const sheetName = workbook.SheetNames.includes('Muc Dich Thue') ? 'Muc Dich Thue' : workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                
+                // Bỏ qua 2 dòng tiêu đề rác trên cùng
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {range: 2});
+                
+                jsonData.forEach(row => {
+                    let ma_nv = row['Mã NV'];
+                    if(ma_nv) {
+                        MUC_DICH_THUE[String(ma_nv).trim()] = {
+                            ten_nv: row['Tên CBCNV'] || '',
+                            don_vi: row['Đơn vị'] || '',
+                            muc_dich: row['Mục đích thuê'] || ''
+                        };
+                    }
+                });
+                console.log("Đã tải xong dữ liệu tham chiếu từ Excel.");
+            } catch (error) {
+                console.warn("Chưa tải được Danh_Sach_Xe.xlsx:", error);
+            }
+        }
+
         window.onload = function() {
+            // Khởi động tải file tham chiếu chạy ngầm
+            loadThamChieuExcel();
+
             if (localStorage.getItem("savedEmail")) {
                 document.getElementById('email').value = localStorage.getItem("savedEmail");
                 document.getElementById('pass').value = localStorage.getItem("savedPass");
@@ -507,7 +539,6 @@
                     localStorage.removeItem("savedPass");
                 }
                 
-                // Hiển thị cả 2 tab báo cáo cho Admin
                 if (email === ADMIN_EMAIL) {
                     document.getElementById('tab-dashboard').classList.remove('hidden');
                     document.getElementById('tab-quyettoan').classList.remove('hidden');
@@ -524,7 +555,6 @@
             }
         }
 
-        // Xuất Excel Bảng Tổng Hợp
         function exportExcelTH() {
             try {
                 let table = document.querySelector('.th-table');
@@ -544,7 +574,6 @@
             }
         }
 
-        // Xuất Excel Bảng Quyết Toán
         function exportExcelQT() {
             try {
                 let table = document.querySelector('.qt-table');
@@ -614,7 +643,6 @@
             container.innerHTML = html;
         }
 
-        // Tải dữ liệu Bảng Quyết Toán
         async function loadQuyetToan() {
             const container = document.getElementById('quyettoan-list');
             container.innerHTML = '<p style="text-align:center;">Đang tải dữ liệu quyết toán...</p>';
@@ -625,6 +653,20 @@
 
             if (error) { showToast('Không thể tải quyết toán!', 'error'); return; }
             if (data.length === 0) { container.innerHTML = '<p style="text-align:center;">Chưa có dữ liệu nào trong hệ thống.</p>'; return; }
+
+            const groupedQT = {};
+            data.forEach(row => {
+                if (!groupedQT[row.ma_nv]) {
+                    groupedQT[row.ma_nv] = {
+                        ngay_cap: row.ngay_cap || '',
+                        lit: 0,
+                        ma_nv: row.ma_nv,
+                        ten_goc: row.ten_nv || '',
+                        donvi_goc: row.don_vi || ''
+                    };
+                }
+                groupedQT[row.ma_nv].lit += parseFloat(row.lit_cap || 0);
+            });
 
             let html = '<table class="dash-table qt-table">';
             html += `<thead><tr>
@@ -637,23 +679,36 @@
             </tr></thead><tbody>`;
             
             let tong_lit = 0;
+            let idx = 1;
 
-            data.forEach((trip, idx) => {
-                let lit = parseFloat(trip.lit_cap) || 0;
+            for (const ma_nv in groupedQT) {
+                let p = groupedQT[ma_nv];
+                let lit = p.lit;
                 tong_lit += lit;
                 
-                let nguoi_nhan = trip.ten_nv || '';
-                if (trip.bien_so) { nguoi_nhan += ` (${trip.bien_so})`; }
+                let noidung = "";
+                let nguoi_nhan = "";
+                let donvi = "";
+
+                if (MUC_DICH_THUE[ma_nv]) {
+                    noidung = MUC_DICH_THUE[ma_nv].muc_dich;
+                    nguoi_nhan = MUC_DICH_THUE[ma_nv].ten_nv;
+                    donvi = MUC_DICH_THUE[ma_nv].don_vi;
+                } else {
+                    noidung = "Không tìm thấy tham chiếu";
+                    nguoi_nhan = p.ten_goc;
+                    donvi = p.donvi_goc;
+                }
 
                 html += `<tr>
-                    <td style="text-align:center;">${idx + 1}</td>
-                    <td style="text-align:center;">${formatDateDMY(trip.ngay_cap)}</td>
-                    <td>${trip.noi_dung || ''}</td>
-                    <td style="text-align:center; font-weight:bold;">${trip.lit_cap || 0}</td>
+                    <td style="text-align:center;">${idx++}</td>
+                    <td style="text-align:center;">${formatDateDMY(p.ngay_cap)}</td>
+                    <td>${noidung}</td>
+                    <td style="text-align:center; font-weight:bold;">${lit}</td>
                     <td>${nguoi_nhan}</td>
-                    <td style="text-align:center;">${trip.don_vi || ''}</td>
+                    <td style="text-align:center;">${donvi}</td>
                 </tr>`;
-            });
+            }
             
             let formattedTongLit = Number.isInteger(tong_lit) ? tong_lit : tong_lit.toFixed(1);
             
