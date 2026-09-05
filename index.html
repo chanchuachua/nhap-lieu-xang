@@ -43,6 +43,8 @@
         .nav-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
         .nav-tabs button { margin-top: 0; padding: 10px; background: #e0e0e0; color: #333; transition: 0.3s; }
         .nav-tabs button.active { background: #1a73e8; color: white; }
+        .nav-tabs button#tab-dashboard { background: #28a745; color: white; }
+        .nav-tabs button#tab-dashboard.active { background: #1e7e34; }
         
         .history-item { padding: 12px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff; cursor: pointer; border-left: 4px solid #1a73e8; position: relative; user-select: none; -webkit-user-select: none; }
         .history-item:active { background: #f0f2f5; }
@@ -60,6 +62,11 @@
         .toast.show { opacity: 1; transform: translateY(0); }
         .toast-success { background-color: #10b981; }
         .toast-error { background-color: #ef4444; }
+
+        /* Bảng hiển thị Dashboard */
+        .dash-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        .dash-table th, .dash-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .dash-table th { background-color: #f0f2f5; color: #1a73e8; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -111,6 +118,19 @@
         <div class="nav-tabs">
             <button id="tab-form" class="active" onclick="switchTab('form')">📝 Nhập Mới</button>
             <button id="tab-history" onclick="switchTab('history')">🕒 Lịch Sử</button>
+            <button id="tab-dashboard" class="hidden" onclick="switchTab('dashboard')">📊 Báo Cáo</button>
+        </div>
+
+        <div id="dashboard-view" class="hidden">
+            <div class="group">
+                <div class="group-header">
+                    <h3>Báo Cáo Tổng Hợp Xăng</h3>
+                    <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
+                </div>
+                <div id="dashboard-list" style="overflow-x: auto;">
+                    <p style="text-align:center; color:#666;">Đang tải dữ liệu...</p>
+                </div>
+            </div>
         </div>
 
         <div id="history-view" class="hidden">
@@ -245,6 +265,9 @@
         const SUPABASE_KEY = 'sb_publishable_58O7qBE7jTdCxveWzKjttw_d60MBwrr';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // THAY ĐỔI EMAIL CỦA BẠN VÀO ĐÂY ĐỂ ĐƯỢC CẤP QUYỀN XEM BÁO CÁO TỔNG HỢP
+        const ADMIN_EMAIL = 'cloubleeyes@gmail.com'; 
+
         let currentEditId = null;
         let historyData = [];
         let sortableInstance = null; 
@@ -356,22 +379,30 @@
             document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
             document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
 
+            document.getElementById('tab-form').classList.remove('active');
+            document.getElementById('tab-history').classList.remove('active');
+            document.getElementById('tab-dashboard').classList.remove('active');
+            
+            document.getElementById('data-form').classList.add('hidden');
+            document.getElementById('history-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.add('hidden');
+
             if(tab === 'form') {
                 document.getElementById('tab-form').classList.add('active');
-                document.getElementById('tab-history').classList.remove('active');
                 document.getElementById('data-form').classList.remove('hidden');
-                document.getElementById('history-view').classList.add('hidden');
                 
                 if(currentEditId) {
                     currentEditId = null;
                     document.getElementById('btn-save').innerText = "Lưu Phiếu Mới";
                 }
-            } else {
+            } else if (tab === 'history') {
                 document.getElementById('tab-history').classList.add('active');
-                document.getElementById('tab-form').classList.remove('active');
                 document.getElementById('history-view').classList.remove('hidden');
-                document.getElementById('data-form').classList.add('hidden');
                 loadHistory();
+            } else if (tab === 'dashboard') {
+                document.getElementById('tab-dashboard').classList.add('active');
+                document.getElementById('dashboard-view').classList.remove('hidden');
+                loadDashboard();
             }
         }
 
@@ -407,10 +438,56 @@
                     localStorage.removeItem("savedEmail");
                     localStorage.removeItem("savedPass");
                 }
+                
+                // Cấp quyền Admin hiển thị Tab Báo cáo
+                if (email === ADMIN_EMAIL) {
+                    document.getElementById('tab-dashboard').classList.remove('hidden');
+                } else {
+                    document.getElementById('tab-dashboard').classList.add('hidden');
+                }
+
                 showToast('Đăng nhập thành công!', 'success');
                 document.getElementById('login-form').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
+                
+                // Reset về tab form mặc định
+                switchTab('form');
             }
+        }
+
+        async function loadDashboard() {
+            const container = document.getElementById('dashboard-list');
+            container.innerHTML = '<p style="text-align:center;">Đang tính toán dữ liệu...</p>';
+            
+            showLoader();
+            const { data, error } = await supabaseClient.from('bang_tong_hop').select('*');
+            hideLoader();
+
+            if (error) {
+                container.innerHTML = `<p style="color:red;">Lỗi tải dữ liệu báo cáo: ${error.message}</p>`;
+                showToast('Không thể tải báo cáo!', 'error');
+                return;
+            }
+
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align:center;">Chưa có dữ liệu nào trong hệ thống.</p>';
+                return;
+            }
+
+            let html = '<table class="dash-table">';
+            html += '<tr><th>Mã NV</th><th>Tên NV</th><th>Số Phiếu</th><th>Tổng Lít</th></tr>';
+            
+            data.forEach(row => {
+                html += `<tr>
+                    <td>${row.ma_nv}</td>
+                    <td>${row.ten_nv || ''}</td>
+                    <td style="text-align:center;">${row.tong_so_chuyen}</td>
+                    <td style="text-align:center; color:#d93025; font-weight:bold;">${row.tong_lit_cap || 0}</td>
+                </tr>`;
+            });
+            
+            html += '</table>';
+            container.innerHTML = html;
         }
 
         async function loadHistory() {
@@ -427,7 +504,6 @@
                 return;
             }
 
-            // Xử lý đối chiếu và khôi phục thứ tự đã kéo thả
             try {
                 const savedOrderStr = localStorage.getItem('history_order');
                 if (savedOrderStr) {
@@ -435,7 +511,6 @@
                     data.sort((a, b) => {
                         let indexA = savedOrder.indexOf(a.id);
                         let indexB = savedOrder.indexOf(b.id);
-                        
                         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
                         if (indexA === -1 && indexB !== -1) return -1;
                         if (indexA !== -1 && indexB === -1) return 1;
@@ -467,7 +542,6 @@
                 `;
             });
 
-            // Cập nhật sự kiện ghi nhớ khi kéo thả kết thúc
             if (sortableInstance) {
                 sortableInstance.destroy();
             }
@@ -525,14 +599,10 @@
 
             document.getElementById('btn-save').innerText = "Cập Nhật Dữ Liệu";
             
-            document.getElementById('tab-form').classList.remove('active');
-            document.getElementById('tab-history').classList.remove('active');
+            switchTab('form');
             
             document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
             document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
-
-            document.getElementById('data-form').classList.remove('hidden');
-            document.getElementById('history-view').classList.add('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -581,7 +651,6 @@
                 if(currentEditId) {
                     currentEditId = null;
                     document.getElementById('btn-save').innerText = "Lưu Phiếu Mới";
-                    document.getElementById('tab-form').classList.add('active');
                     document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
                     document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
                 }
