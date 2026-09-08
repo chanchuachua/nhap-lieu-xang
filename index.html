@@ -96,7 +96,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.13)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.15)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -339,43 +339,26 @@
             return dateStr;
         }
 
-        // TẢI FILE EXCEL THAM CHIẾU VỚI CƠ CHẾ CHỐNG LỖI CẢI TIẾN
-        async function loadThamChieuExcel() {
+        // TẢI FILE THAM CHIẾU TỪ BẢNG danh_sach_xe MỚI
+        async function loadThamChieuDB() {
             try {
-                // Thêm "?v=..." để chống trình duyệt lưu bộ nhớ đệm (cache) bản cũ
-                const response = await fetch('Danh_Sach_Xe.xlsx?v=' + new Date().getTime());
-                if (!response.ok) throw new Error("Không thể tải file qua mạng.");
+                const { data, error } = await supabaseClient.from('danh_sach_xe').select('*');
+                if (error) throw error;
                 
-                const arrayBuffer = await response.arrayBuffer();
-                const data = new Uint8Array(arrayBuffer);
-                const workbook = XLSX.read(data, {type: 'array'});
-                
-                // Lấy sheet đầu tiên hoặc sheet chứa chữ Danh_Sach_Xe / Muc Dich Thue
-                let sheetName = workbook.SheetNames[0];
-                if (workbook.SheetNames.includes('Muc Dich Thue')) sheetName = 'Muc Dich Thue';
-                else if (workbook.SheetNames.includes('Danh_Sach_Xe')) sheetName = 'Danh_Sach_Xe';
-                
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, {range: 2});
-                
-                jsonData.forEach(row => {
-                    // Quét mọi trường hợp tiêu đề có khoảng trắng thừa
-                    let ma_nv = row['Mã NV'] || row['Mã NV '] || row[' Mã NV'] || row['Mã nhân viên'];
-                    if(ma_nv) {
-                        MUC_DICH_THUE[String(ma_nv).trim()] = {
-                            ten_nv: row['Tên CBCNV'] || row['Tên CBCNV '] || '',
-                            don_vi: row['Đơn vị'] || row['Đơn vị '] || '',
-                            muc_dich: row['Mục đích thuê'] || row['Mục đích thuê '] || ''
+                MUC_DICH_THUE = {}; 
+                data.forEach(row => {
+                    if (row.ma_nv) {
+                        MUC_DICH_THUE[String(row.ma_nv).trim()] = {
+                            ten_nv: row.ten_nv || '',
+                            don_vi: row.don_vi || '',
+                            muc_dich: row.muc_dich || ''
                         };
                     }
                 });
-                console.log("Đã tải Dữ liệu tham chiếu thành công!");
+                console.log("Đã tải dữ liệu tham chiếu từ bảng danh_sach_xe thành công!");
             } catch (error) {
                 console.warn(error);
-                // Báo lỗi đỏ lên màn hình sau 1.5 giây nếu file bị chặn
-                setTimeout(() => {
-                    showToast("CẢNH BÁO: Chưa tải được file Danh_Sach_Xe.xlsx! Hãy đảm bảo bạn đã đẩy file lên GitHub và truy cập bằng link web (không mở trực tiếp trên máy).", "error");
-                }, 1500);
+                showToast("Cảnh báo: Không thể tải danh sách nhân viên tham chiếu!", "error");
             }
         }
 
@@ -388,7 +371,6 @@
         });
 
         window.onload = function() {
-            loadThamChieuExcel(); // Gọi hàm nạp dữ liệu tham chiếu
             if (localStorage.getItem("savedEmail")) {
                 document.getElementById('email').value = localStorage.getItem("savedEmail");
                 document.getElementById('pass').value = localStorage.getItem("savedPass");
@@ -553,6 +535,7 @@
                 document.getElementById('login-form').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 
+                await loadThamChieuDB();
                 switchTab('form');
             }
         }
@@ -692,7 +675,6 @@
                 let nguoi_nhan = "";
                 let donvi = "";
 
-                // Loại bỏ khoảng trắng thừa để đối chiếu chính xác
                 let nv_key = String(ma_nv).trim();
 
                 if (MUC_DICH_THUE[nv_key]) {
