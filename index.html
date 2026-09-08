@@ -10,7 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     
     <style>
-        /* CSS CHO GIAO DIỆN WEB */
+        /* ============================================================== */
+        /* CSS CHO GIAO DIỆN WEB (MÀN HÌNH ĐIỆN THOẠI / MÁY TÍNH)         */
+        /* ============================================================== */
         @media screen {
             #print-section { display: none; }
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 12px; max-width: 550px; margin: auto; background-color: #f0f2f5; color: #333; }
@@ -58,7 +60,7 @@
             .nav-tabs button#tab-quyettoan { background: #6f42c1; color: white; }
             .nav-tabs button#tab-quyettoan.active { background: #5a32a3; }
             
-            .history-item { padding: 12px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff; cursor: pointer; border-left: 4px solid #1a73e8; position: relative; user-select: none; -webkit-user-select: none; }
+            .history-item { padding: 12px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff; cursor: pointer; border-left: 4px solid #1a73e8; position: relative; user-select: none; -webkit-user-select: none; transition: 0.2s;}
             .history-item:active { background: #f0f2f5; }
             .history-title { font-weight: bold; color: #1a73e8; margin-bottom: 4px; display: block;}
             .history-desc { font-size: 14px; color: #555; }
@@ -66,8 +68,13 @@
             .btn-action { font-size: 18px; cursor: pointer; padding: 5px; user-select: none; }
             .sortable-ghost { opacity: 0.5; background-color: #e3f2fd; border: 2px dashed #1a73e8; } 
 
-            .toolbar { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: #e8f0fe; padding: 10px; border-radius: 8px; border: 1px solid #cce5ff;}
-
+            /* THIẾT KẾ CHO CHẾ ĐỘ IN (UI WEB) */
+            .print-toggle-wrapper { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #17a2b8; font-weight: bold; cursor: pointer; }
+            .print-toggle-wrapper input[type="checkbox"] { accent-color: #17a2b8; width: 18px; height: 18px; }
+            
+            .toolbar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; background: #e8f0fe; padding: 12px; border-radius: 8px; border: 1px solid #cce5ff; transition: 0.3s;}
+            .toolbar-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+            
             #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; }
             .spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
             @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -84,28 +91,49 @@
             .dash-table th { background-color: #e9ecef; color: #1a73e8; text-align: center; font-weight: bold; white-space: nowrap; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.2); }
         }
 
-        /* CSS ĐẶC BIỆT: IN (9.9cm / phiếu - 3 phiếu 1 tờ A4) */
+        /* ============================================================== */
+        /* CSS ĐẶC BIỆT DÀNH CHO MÁY IN (IN LIÊN TRÁI & PHẢI TRÊN TỜ A4) */
+        /* ============================================================== */
         @media print {
             body * { visibility: hidden; }
             #print-section, #print-section * { visibility: visible; }
+            
             #print-section { position: absolute; left: 0; top: 0; width: 21cm; margin: 0; padding: 0; background: white !important; color: #000; }
+            
+            /* Dải 1 phiếu chạy dài từ trái sang phải, cao 9.9cm để in vừa 3 dải trên A4 (29.7cm) */
             .ticket-wrap {
-                width: 21cm; height: 9.9cm; box-sizing: border-box;
-                padding: 0.5cm 1.5cm 0 1.5cm; /* Lề trái 1.5cm để làm cùi */
+                width: 21cm; 
+                height: 9.9cm; 
+                box-sizing: border-box;
                 border-bottom: 1px dashed #999;
                 font-family: "Times New Roman", Times, serif;
                 page-break-inside: avoid;
+                display: flex; /* CHIA ĐÔI MÀN HÌNH */
             }
             .ticket-wrap:last-child { border-bottom: none; }
             @page { size: A4 portrait; margin: 0; }
             
-            .pt-title { color: #0056b3 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 20px; font-weight: bold; text-transform: uppercase; }
-            .pt-row { font-size: 16px; line-height: 2; display: flex; align-items: flex-end; margin-bottom: 3px; }
-            .pt-label { white-space: nowrap; margin-right: 8px; }
-            .pt-val { flex: 1; border-bottom: 1px dotted #000; font-weight: bold; padding: 0 5px; text-align: left; }
+            /* CÙI LƯU (BÊN TRÁI) - Chiếm 50% = 10.5cm */
+            .half-left {
+                width: 50%; height: 100%; box-sizing: border-box;
+                padding: 0.5cm 0.5cm 0 1cm;
+                border-right: 1px dotted #ccc; /* Rãnh răng cưa giả lập */
+            }
+            
+            /* PHIẾU GIAO CHO NGƯỜI NHẬN (BÊN PHẢI) - Chiếm 50% = 10.5cm */
+            .half-right {
+                width: 50%; height: 100%; box-sizing: border-box;
+                padding: 0.5cm 1cm 0 0.5cm;
+            }
+
+            /* Định dạng chung cho chữ trong phiếu in */
+            .pt-title { color: #0056b3 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 15px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px;}
+            .pt-row { font-size: 13px; line-height: 1.8; display: flex; align-items: flex-end; margin-bottom: 3px; }
+            .pt-label { white-space: nowrap; margin-right: 5px; }
+            .pt-val { flex: 1; border-bottom: 1px dotted #000; font-weight: bold; padding: 0 3px; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
             .pt-val-empty { flex: 1; border-bottom: 1px dotted #000; }
-            .pt-date { text-align: right; font-style: italic; font-size: 16px; margin-top: 10px; margin-bottom: 15px; padding-right: 10px; }
-            .pt-sign { display: flex; justify-content: space-between; text-align: center; font-size: 16px; font-weight: bold; }
+            .pt-date { text-align: right; font-style: italic; font-size: 13px; margin-top: 10px; margin-bottom: 15px;}
+            .pt-sign { display: flex; justify-content: space-between; text-align: center; font-size: 13px; font-weight: bold; }
             .pt-sign > div { width: 33.33%; }
         }
     </style>
@@ -123,7 +151,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.19)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.20)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -190,20 +218,37 @@
             </div>
         </div>
 
-        <!-- TAB LỊCH SỬ NÂNG CẤP -->
+        <!-- TAB LỊCH SỬ (PHIÊN BẢN 1.20) -->
         <div id="history-view" class="hidden">
             <div class="group">
                 <div class="group-header" style="margin-bottom: 10px;">
-                    <h3>Lịch sử & In phiếu</h3>
+                    <div style="display:flex; align-items:center; gap: 15px;">
+                        <h3>Lịch sử</h3>
+                        <!-- CÔNG TẮC ẨN/HIỆN CHẾ ĐỘ IN -->
+                        <label class="print-toggle-wrapper">
+                            <input type="checkbox" id="toggle-print-mode" onchange="togglePrintMode()"> Mở In Phiếu
+                        </label>
+                    </div>
                     <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
                 </div>
                 
-                <div class="toolbar">
-                    <label style="display: flex; align-items: center; gap: 5px; font-weight: bold; cursor: pointer;">
-                        <input type="checkbox" id="check-all" onchange="toggleCheckAll()"> Chọn tất cả
-                    </label>
-                    <input type="date" id="filter-date" style="padding: 8px; border: 1px solid #ccc; border-radius: 6px; flex: 1;" onchange="applyFilter()">
-                    <button class="btn-logout" onclick="printSelected()" style="margin: 0; background-color: #17a2b8; color: white; font-size: 14px; padding: 8px 12px;">🖨️ In phiếu chọn</button>
+                <!-- THANH CÔNG CỤ IN BỊ ẨN MẶC ĐỊNH -->
+                <div id="print-toolbar" class="toolbar hidden">
+                    <!-- Hàng 1: Bộ lọc ngày -->
+                    <div class="toolbar-row" style="flex-wrap: wrap;">
+                        <span style="font-size: 13px; font-weight:bold; color:#555;">Từ:</span>
+                        <input type="date" id="filter-date-from" style="padding: 6px; border: 1px solid #ccc; border-radius: 6px; flex: 1; font-size:13px;" onchange="applyFilter()">
+                        <span style="font-size: 13px; font-weight:bold; color:#555;">Đến:</span>
+                        <input type="date" id="filter-date-to" style="padding: 6px; border: 1px solid #ccc; border-radius: 6px; flex: 1; font-size:13px;" onchange="applyFilter()">
+                    </div>
+                    <!-- Hàng 2: Nút chọn và In -->
+                    <div class="toolbar-row">
+                        <label style="display: flex; align-items: center; gap: 5px; font-weight: bold; cursor: pointer; font-size:14px;">
+                            <input type="checkbox" id="check-all" onchange="toggleCheckAll()"> Tất cả
+                            <span id="select-count" style="font-weight:normal; color:#d93025;">(0)</span>
+                        </label>
+                        <button class="btn-logout" onclick="printSelected()" style="margin: 0; background-color: #17a2b8; color: white; font-size: 13px; padding: 8px 12px; width: 120px;">🖨️ In đã chọn</button>
+                    </div>
                 </div>
 
                 <div id="history-list"><p style="text-align:center;">Đang tải...</p></div>
@@ -215,7 +260,6 @@
                 <div class="group-header edit-target">
                     <h3>1. Người đi & Phương tiện</h3>
                     <div style="display: flex; gap: 8px;">
-                        <button id="btn-inline-print" class="btn-logout hidden" onclick="inlinePrint()" style="background-color: #17a2b8; color: white;">🖨️ In Phiếu</button>
                         <button id="btn-inline-edit" class="btn-logout hidden" onclick="inlineEdit()" style="background-color: #d97706; color: white;">✏️ Sửa</button>
                         <button id="btn-inline-delete" class="btn-logout hidden" onclick="inlineDelete()" style="background-color: #dc3545; color: white;">❌ Xóa</button>
                         <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
@@ -270,7 +314,6 @@
                 </div>
                 <label class="title">Ngày đi công tác (Nhập chữ tự do): <span class="req">*</span></label>
                 <div class="input-row">
-                    <!-- ĐÃ ĐỔI THÀNH DẠNG TEXT ĐỂ DỒN NGÀY -->
                     <div class="input-wrapper"><input type="text" id="ngay_di" class="data-input" placeholder="VD: 01,02,03/09/2026"></div>
                     <label class="remember-cb"><input type="checkbox" id="rem_ngay_di" checked> Ghi nhớ</label>
                 </div>
@@ -344,8 +387,8 @@
         let MUC_DICH_THUE = {};
         let currentEditId = null;
         let loadedRecordId = null; 
-        let historyData = [];      // Toàn bộ dữ liệu gốc
-        let displayedHistoryData = []; // Dữ liệu đang được hiển thị sau khi lọc
+        let historyData = [];      
+        let displayedHistoryData = []; 
         let sortableInstance = null; 
 
         function showLoader() { document.getElementById('loader').classList.remove('hidden'); }
@@ -465,7 +508,7 @@
                 const btnSave = document.getElementById('btn-save'); btnSave.innerText = "Lưu Phiếu Mới"; btnSave.classList.remove('edit-mode-btn');
                 document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
                 document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
-                document.getElementById('btn-inline-edit').classList.add('hidden'); document.getElementById('btn-inline-delete').classList.add('hidden'); document.getElementById('btn-inline-print').classList.add('hidden');
+                document.getElementById('btn-inline-edit').classList.add('hidden'); document.getElementById('btn-inline-delete').classList.add('hidden');
                 
                 document.querySelectorAll('.data-input').forEach(input => {
                     const cb = document.getElementById('rem_' + input.id);
@@ -502,7 +545,128 @@
             }
         }
 
-        // --- HÀM TẠO HTML PHIẾU ĐỂ IN ---
+        // ==========================================================
+        // KHU VỰC CÁC HÀM XỬ LÝ LỊCH SỬ & IN ẤN (PHIÊN BẢN 1.20)
+        // ==========================================================
+
+        function togglePrintMode() {
+            let isPrintMode = document.getElementById('toggle-print-mode').checked;
+            let toolbar = document.getElementById('print-toolbar');
+            
+            if(isPrintMode) {
+                toolbar.classList.remove('hidden');
+            } else {
+                toolbar.classList.add('hidden');
+                document.getElementById('check-all').checked = false; // Bỏ chọn tất cả
+                document.getElementById('filter-date-from').value = '';
+                document.getElementById('filter-date-to').value = '';
+                applyFilter(); // Trả lại danh sách ban đầu
+            }
+            renderHistory(displayedHistoryData); // Vẽ lại UI để hiện/ẩn checkbox
+        }
+
+        function toggleCheckAll() {
+            let isChecked = document.getElementById('check-all').checked;
+            document.querySelectorAll('.item-checkbox').forEach(cb => { cb.checked = isChecked; });
+            updateSelectCount();
+        }
+
+        function updateSelectCount() {
+            let count = document.querySelectorAll('.item-checkbox:checked').length;
+            document.getElementById('select-count').innerText = `(${count})`;
+        }
+
+        function applyFilter() {
+            let fromDate = document.getElementById('filter-date-from').value;
+            let toDate = document.getElementById('filter-date-to').value;
+            
+            displayedHistoryData = historyData.filter(d => {
+                if(!d.ngay_cap) return false;
+                if(fromDate && d.ngay_cap < fromDate) return false;
+                if(toDate && d.ngay_cap > toDate) return false;
+                return true;
+            });
+            renderHistory(displayedHistoryData);
+        }
+
+        // HÀM VẼ LẠI GIAO DIỆN LỊCH SỬ
+        function renderHistory(dataToRender) {
+            const container = document.getElementById('history-list');
+            let isPrintMode = document.getElementById('toggle-print-mode').checked;
+            
+            document.getElementById('check-all').checked = false; 
+            updateSelectCount(); 
+
+            if (dataToRender.length === 0) { container.innerHTML = '<p style="text-align:center; color:#777;">Không có dữ liệu phù hợp.</p>'; return; }
+
+            container.innerHTML = '';
+            dataToRender.forEach((item) => {
+                // Nếu bật in -> Hiện Checkbox. Nếu tắt -> Ẩn Checkbox.
+                let checkboxHTML = isPrintMode ? `<input type="checkbox" class="item-checkbox" value="${item.id}" onclick="event.stopPropagation(); updateSelectCount();" style="width:18px;height:18px;accent-color:#1a73e8;cursor:pointer;">` : '';
+                
+                container.innerHTML += `
+                    <div class="history-item" data-id="${item.id}" onclick="cloneRecord(${item.id})">
+                        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                ${checkboxHTML}
+                                <span class="history-title" style="margin: 0;">Ngày cấp NL: ${item.ngay_cap || 'Trống'}</span>
+                            </div>
+                            <div class="action-btns">
+                                <span class="btn-action" onclick="editRecord(event, ${item.id})" title="Sửa phiếu">✏️</span>
+                                <span class="btn-action" onclick="deleteRecord(event, ${item.id})" title="Xóa phiếu">❌</span>
+                            </div>
+                        </div>
+                        <div class="history-desc">
+                            <strong>Ngày đi:</strong> ${item.ngay_di || 'Trống'} <br>
+                            <strong>Nội dung:</strong> ${item.noi_dung || 'Trống'} <br>
+                            <strong>Nhân viên:</strong> ${item.ten_nv} (${item.ma_nv}) - Số lít: <b style="color:#d93025">${item.lit_cap}</b>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (sortableInstance) { sortableInstance.destroy(); }
+            sortableInstance = Sortable.create(container, {
+                delay: 300, delayOnTouchOnly: true, animation: 150, ghostClass: 'sortable-ghost',
+                onEnd: function () {
+                    const items = container.querySelectorAll('.history-item');
+                    const newOrder = Array.from(items).map(item => parseInt(item.getAttribute('data-id')));
+                    localStorage.setItem('history_order', JSON.stringify(newOrder));
+                }
+            });
+        }
+
+        async function loadHistory() {
+            const container = document.getElementById('history-list'); container.innerHTML = '<p style="text-align:center;">Đang tải...</p>';
+            showLoader(); const { data: { user } } = await supabaseClient.auth.getUser(); const userEmail = user ? user.email : '';
+            let query = supabaseClient.from('du_lieu').select('*');
+            if (userEmail !== ADMIN_EMAIL) { query = query.eq('email_tao', userEmail); }
+            const { data, error } = await query.order('id', { ascending: false }).limit(200); hideLoader();
+            if (error) { showToast('Không thể tải lịch sử!', 'error'); return; }
+
+            try {
+                const savedOrderStr = localStorage.getItem('history_order');
+                if (savedOrderStr) {
+                    const savedOrder = JSON.parse(savedOrderStr);
+                    data.sort((a, b) => {
+                        let indexA = savedOrder.indexOf(a.id); let indexB = savedOrder.indexOf(b.id);
+                        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                        if (indexA === -1 && indexB !== -1) return -1;
+                        if (indexA !== -1 && indexB === -1) return 1; return 0;
+                    });
+                }
+            } catch (e) {}
+            historyData = data;
+            
+            // Xóa bộ lọc nếu đang có
+            document.getElementById('filter-date-from').value = '';
+            document.getElementById('filter-date-to').value = '';
+            displayedHistoryData = historyData;
+            
+            renderHistory(displayedHistoryData);
+        }
+
+        // HÀM TẠO HTML PHIẾU IN (CHIA 2 NỬA TRÁI / PHẢI CHO 1 NGƯỜI)
         function executePrint(itemsArray) {
             let html = '';
             itemsArray.forEach(item => {
@@ -511,49 +675,44 @@
                     let d = item.ngay_cap.split('-');
                     if(d.length === 3) dStr = `Ngày ${d[2]} tháng ${d[1]} năm 20${d[0].substring(2,4)}`;
                 }
-                html += `
-                <div class="ticket-wrap">
+                
+                // MỘT BẢN THIẾT KẾ ĐƯỢC DÙNG CHUNG CHO CẢ TRÁI VÀ PHẢI
+                let ticketContent = `
                     <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px;">
                         <div class="pt-title">PHIẾU GIAO NHẬN XĂNG DẦU</div>
-                        <div style="font-size: 16px;">Số: <b>${item.so_phieu || '..................'}</b></div>
+                        <div style="font-size: 13px;">Số: <b>${item.so_phieu || '...............'}</b></div>
                     </div>
                     <div class="pt-row"><span class="pt-label">Đơn vị:</span><span class="pt-val">${item.don_vi || '.......................................'}</span></div>
                     <div class="pt-row"><span class="pt-label">Người nhận:</span><span class="pt-val">${item.ten_nv || '.......................................'}</span></div>
                     <div class="pt-row">
-                        <span class="pt-label">Số lượng xăng:</span><span class="pt-val" style="flex: 0 0 80px;">${item.lit_cap || '..........'}</span><span style="margin-left: 10px;">lít</span><span class="pt-val-empty"></span>
+                        <span class="pt-label">Số lượng xăng:</span><span class="pt-val" style="flex: 0 0 60px;">${item.lit_cap || '........'}</span><span style="margin-left: 5px;">lít</span><span class="pt-val-empty"></span>
                     </div>
                     <div class="pt-row"><span class="pt-label">Số lượng dầu:</span><span class="pt-val-empty"></span></div>
                     <div class="pt-row">
-                        <span class="pt-label">Số lượng nhớt:</span><span class="pt-val-empty" style="flex: 1.5;"></span>
-                        <span class="pt-label" style="margin-left: 15px;">Đơn giá:</span><span class="pt-val-empty"></span><span style="margin-left: 10px;">đ/lít</span>
+                        <span class="pt-label">Số lượng nhớt:</span><span class="pt-val-empty" style="flex: 1.2;"></span>
+                        <span class="pt-label" style="margin-left: 10px;">Đơn giá:</span><span class="pt-val-empty"></span><span style="margin-left: 5px;">đ/lít</span>
                     </div>
                     <div class="pt-date">${dStr}</div>
                     <div class="pt-sign">
-                        <div>Người nhận</div><div>Người giao</div><div>Thủ trưởng đơn vị</div>
+                        <div>Người nhận</div><div>Người giao</div><div>Thủ trưởng ĐV</div>
+                    </div>
+                `;
+
+                // Đổ vào 2 cột
+                html += `
+                <div class="ticket-wrap">
+                    <div class="half-left">
+                        <div style="font-size:10px; font-style:italic; text-align:right; margin-bottom:-5px; color:#555">Liên 1: Lưu</div>
+                        ${ticketContent}
+                    </div>
+                    <div class="half-right">
+                        <div style="font-size:10px; font-style:italic; text-align:right; margin-bottom:-5px; color:#555">Liên 2: Người giao</div>
+                        ${ticketContent}
                     </div>
                 </div>`;
             });
             document.getElementById('print-section').innerHTML = html;
             window.print(); 
-        }
-
-        function inlinePrint() { 
-            if (loadedRecordId) {
-                const item = historyData.find(d => d.id === loadedRecordId);
-                if(item) executePrint([item]);
-            }
-        }
-
-        function printSingleRecord(event, id) {
-            if(event) event.stopPropagation();
-            const item = historyData.find(d => d.id === id);
-            if(item) executePrint([item]);
-        }
-
-        // --- XỬ LÝ CHỌN VÀ IN HÀNG LOẠT ---
-        function toggleCheckAll() {
-            let isChecked = document.getElementById('check-all').checked;
-            document.querySelectorAll('.item-checkbox').forEach(cb => { cb.checked = isChecked; });
         }
 
         function printSelected() {
@@ -563,7 +722,6 @@
             let idsToPrint = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
             let itemsToPrint = historyData.filter(d => idsToPrint.includes(d.id));
             
-            // Sắp xếp lại theo thứ tự đang hiển thị trên giao diện
             let sortedToPrint = [];
             document.querySelectorAll('.history-item').forEach(el => {
                 let id = parseInt(el.getAttribute('data-id'));
@@ -574,6 +732,86 @@
             executePrint(sortedToPrint);
         }
 
+        async function deleteRecord(event, id) {
+            event.stopPropagation();
+            if(confirm("Bạn có chắc chắn muốn xóa vĩnh viễn dòng dữ liệu này không?")) {
+                showLoader(); const { error } = await supabaseClient.from('du_lieu').delete().eq('id', id); hideLoader();
+                if(error) { showToast('Lỗi khi xóa: ' + error.message, 'error'); } 
+                else { showToast('Đã xóa dữ liệu thành công!', 'success'); loadHistory(); }
+            }
+        }
+
+        async function inlineDelete() {
+            if (!loadedRecordId) return;
+            if(confirm("Bạn có chắc chắn muốn xóa vĩnh viễn phiếu này không?")) {
+                showLoader(); const { error } = await supabaseClient.from('du_lieu').delete().eq('id', loadedRecordId); hideLoader();
+                if(error) { showToast('Lỗi khi xóa: ' + error.message, 'error'); } 
+                else { showToast('Đã xóa phiếu thành công!', 'success'); switchTab('form'); }
+            }
+        }
+
+        function inlineEdit() {
+            if (!loadedRecordId) return;
+            currentEditId = loadedRecordId; const btnSave = document.getElementById('btn-save');
+            btnSave.innerText = "Cập Nhật Dữ Liệu"; btnSave.classList.add('edit-mode-btn');
+            document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
+            document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
+            document.getElementById('btn-inline-edit').classList.add('hidden');
+            showToast("Đã chuyển sang chế độ Sửa Phiếu!", "success");
+        }
+
+        function fillForm(item) {
+            document.getElementById('ma_nv').value = item.ma_nv || ''; document.getElementById('ten_nv').value = item.ten_nv || ''; document.getElementById('don_vi').value = item.don_vi || ''; document.getElementById('bien_so').value = item.bien_so || ''; document.getElementById('so_phieu').value = item.so_phieu || ''; document.getElementById('ngay_cap').value = item.ngay_cap || ''; document.getElementById('lit_cap').value = item.lit_cap || ''; document.getElementById('ngay_di').value = item.ngay_di || ''; document.getElementById('noi_di').value = item.noi_di || ''; document.getElementById('noi_den').value = item.noi_den || ''; document.getElementById('noi_dung').value = item.noi_dung || ''; document.getElementById('so_lct').value = item.so_lct || ''; document.getElementById('so_pct').value = item.so_pct || ''; document.getElementById('so_ptt').value = item.so_ptt || ''; document.getElementById('km_di').value = item.km_di || ''; document.getElementById('km_ve').value = item.km_ve || ''; document.getElementById('km_ht').value = item.km_ht || '';
+        }
+
+        function cloneRecord(id) {
+            const item = historyData.find(d => d.id === id); if(!item) return; fillForm(item);
+            currentEditId = null; loadedRecordId = id; const btnSave = document.getElementById('btn-save');
+            btnSave.innerText = "Lưu Phiếu Mới"; btnSave.classList.remove('edit-mode-btn');
+            document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
+            document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
+            showFormUIOnly(); document.getElementById('btn-inline-edit').classList.remove('hidden'); document.getElementById('btn-inline-delete').classList.remove('hidden');
+        }
+
+        function editRecord(event, id) {
+            event.stopPropagation(); const item = historyData.find(d => d.id === id); if(!item) return; fillForm(item);
+            currentEditId = item.id; loadedRecordId = item.id; const btnSave = document.getElementById('btn-save');
+            btnSave.innerText = "Cập Nhật Dữ Liệu"; btnSave.classList.add('edit-mode-btn');
+            document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
+            document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
+            showFormUIOnly(); document.getElementById('btn-inline-edit').classList.add('hidden'); document.getElementById('btn-inline-delete').classList.remove('hidden');
+        }
+
+        async function saveData() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            const userEmail = user ? user.email : '';
+            const payload = {
+                ma_nv: document.getElementById('ma_nv').value, ten_nv: document.getElementById('ten_nv').value, don_vi: document.getElementById('don_vi').value, bien_so: document.getElementById('bien_so').value, so_phieu: document.getElementById('so_phieu').value, ngay_cap: document.getElementById('ngay_cap').value, lit_cap: document.getElementById('lit_cap').value, ngay_di: document.getElementById('ngay_di').value, noi_di: document.getElementById('noi_di').value, noi_den: document.getElementById('noi_den').value, noi_dung: document.getElementById('noi_dung').value, so_lct: document.getElementById('so_lct').value, so_pct: document.getElementById('so_pct').value, so_ptt: document.getElementById('so_ptt').value, km_di: document.getElementById('km_di').value, km_ve: document.getElementById('km_ve').value, km_ht: document.getElementById('km_ht').value, email_tao: userEmail
+            };
+
+            if (!payload.ma_nv || !payload.ten_nv || !payload.don_vi || !payload.bien_so || !payload.so_phieu || !payload.ngay_cap || !payload.lit_cap || !payload.ngay_di || !payload.noi_di || !payload.noi_den || !payload.noi_dung) {
+                showToast("Lỗi: Vui lòng điền đầy đủ thông tin vào các ô có dấu * màu đỏ!", "error"); return;
+            }
+            showLoader();
+            let result; if (currentEditId) { result = await supabaseClient.from('du_lieu').update(payload).eq('id', currentEditId); } else { result = await supabaseClient.from('du_lieu').insert([payload]); }
+            hideLoader();
+
+            if (result.error) { showToast('Lỗi khi lưu: ' + result.error.message, 'error'); } 
+            else {
+                showToast(currentEditId ? 'Đã cập nhật phiếu thành công!' : 'Thành công! Dữ liệu đã được lưu mới.', 'success');
+                currentEditId = null; loadedRecordId = null; const btnSave = document.getElementById('btn-save');
+                btnSave.innerText = "Lưu Phiếu Mới"; btnSave.classList.remove('edit-mode-btn');
+                document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
+                document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
+                document.getElementById('btn-inline-edit').classList.add('hidden'); document.getElementById('btn-inline-delete').classList.add('hidden');
+                document.querySelectorAll('.data-input').forEach(input => {
+                    const cb = document.getElementById('rem_' + input.id);
+                    if (cb && cb.checked) { localStorage.setItem("draft_" + input.id, input.value); } else { localStorage.removeItem("draft_" + input.id); input.value = ''; }
+                });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+        
         function exportExcelTH() {
             try {
                 let table = document.querySelector('.th-table'); if(!table) { showToast("Không có dữ liệu để xuất!", "error"); return; }
@@ -652,162 +890,6 @@
             html += '</tbody></table>'; container.innerHTML = html;
         }
 
-        async function loadHistory() {
-            const container = document.getElementById('history-list'); container.innerHTML = '<p style="text-align:center;">Đang tải...</p>';
-            showLoader(); const { data: { user } } = await supabaseClient.auth.getUser(); const userEmail = user ? user.email : '';
-            let query = supabaseClient.from('du_lieu').select('*');
-            if (userEmail !== ADMIN_EMAIL) { query = query.eq('email_tao', userEmail); }
-            const { data, error } = await query.order('id', { ascending: false }).limit(200); hideLoader();
-            if (error) { showToast('Không thể tải lịch sử!', 'error'); return; }
-
-            try {
-                const savedOrderStr = localStorage.getItem('history_order');
-                if (savedOrderStr) {
-                    const savedOrder = JSON.parse(savedOrderStr);
-                    data.sort((a, b) => {
-                        let indexA = savedOrder.indexOf(a.id); let indexB = savedOrder.indexOf(b.id);
-                        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-                        if (indexA === -1 && indexB !== -1) return -1;
-                        if (indexA !== -1 && indexB === -1) return 1; return 0;
-                    });
-                }
-            } catch (e) {}
-            historyData = data;
-            document.getElementById('filter-date').value = ''; // Reset bộ lọc khi tải lại
-            renderHistory(historyData);
-        }
-
-        // --- HÀM LỌC VÀ HIỂN THỊ DANH SÁCH LỊCH SỬ ---
-        function applyFilter() {
-            let filterDate = document.getElementById('filter-date').value;
-            if (filterDate) {
-                displayedHistoryData = historyData.filter(d => d.ngay_cap === filterDate);
-            } else {
-                displayedHistoryData = historyData; // Không chọn ngày thì hiện tất cả
-            }
-            renderHistory(displayedHistoryData);
-        }
-
-        function renderHistory(dataToRender) {
-            const container = document.getElementById('history-list');
-            document.getElementById('check-all').checked = false; // Bỏ tích chọn tất cả mỗi khi vẽ lại
-
-            if (dataToRender.length === 0) { container.innerHTML = '<p style="text-align:center; color:#777;">Không có dữ liệu phù hợp.</p>'; return; }
-
-            container.innerHTML = '';
-            dataToRender.forEach((item) => {
-                container.innerHTML += `
-                    <div class="history-item" data-id="${item.id}" onclick="cloneRecord(${item.id})">
-                        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <input type="checkbox" class="item-checkbox" value="${item.id}" onclick="event.stopPropagation()">
-                                <span class="history-title" style="margin: 0;">Ngày cấp NL: ${item.ngay_cap || 'Trống'}</span>
-                            </div>
-                            <div class="action-btns">
-                                <span class="btn-action" onclick="printSingleRecord(event, ${item.id})" title="In phiếu này">🖨️</span>
-                                <span class="btn-action" onclick="editRecord(event, ${item.id})" title="Sửa phiếu">✏️</span>
-                                <span class="btn-action" onclick="deleteRecord(event, ${item.id})" title="Xóa phiếu">❌</span>
-                            </div>
-                        </div>
-                        <div class="history-desc">
-                            <strong>Ngày đi:</strong> ${item.ngay_di || 'Trống'} <br>
-                            <strong>Nội dung:</strong> ${item.noi_dung || 'Trống'} <br>
-                            <strong>Nhân viên:</strong> ${item.ten_nv} (${item.ma_nv}) - Số lít: <b>${item.lit_cap}</b>
-                        </div>
-                    </div>
-                `;
-            });
-
-            if (sortableInstance) { sortableInstance.destroy(); }
-            sortableInstance = Sortable.create(container, {
-                delay: 300, delayOnTouchOnly: true, animation: 150, ghostClass: 'sortable-ghost',
-                onEnd: function () {
-                    const items = container.querySelectorAll('.history-item');
-                    const newOrder = Array.from(items).map(item => parseInt(item.getAttribute('data-id')));
-                    localStorage.setItem('history_order', JSON.stringify(newOrder));
-                }
-            });
-        }
-
-        async function deleteRecord(event, id) {
-            event.stopPropagation();
-            if(confirm("Bạn có chắc chắn muốn xóa vĩnh viễn dòng dữ liệu này không?")) {
-                showLoader(); const { error } = await supabaseClient.from('du_lieu').delete().eq('id', id); hideLoader();
-                if(error) { showToast('Lỗi khi xóa: ' + error.message, 'error'); } 
-                else { showToast('Đã xóa dữ liệu thành công!', 'success'); loadHistory(); }
-            }
-        }
-
-        async function inlineDelete() {
-            if (!loadedRecordId) return;
-            if(confirm("Bạn có chắc chắn muốn xóa vĩnh viễn phiếu này không?")) {
-                showLoader(); const { error } = await supabaseClient.from('du_lieu').delete().eq('id', loadedRecordId); hideLoader();
-                if(error) { showToast('Lỗi khi xóa: ' + error.message, 'error'); } 
-                else { showToast('Đã xóa phiếu thành công!', 'success'); switchTab('form'); }
-            }
-        }
-
-        function inlineEdit() {
-            if (!loadedRecordId) return;
-            currentEditId = loadedRecordId; const btnSave = document.getElementById('btn-save');
-            btnSave.innerText = "Cập Nhật Dữ Liệu"; btnSave.classList.add('edit-mode-btn');
-            document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
-            document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
-            document.getElementById('btn-inline-edit').classList.add('hidden');
-            showToast("Đã chuyển sang chế độ Sửa Phiếu!", "success");
-        }
-
-        function fillForm(item) {
-            document.getElementById('ma_nv').value = item.ma_nv || ''; document.getElementById('ten_nv').value = item.ten_nv || ''; document.getElementById('don_vi').value = item.don_vi || ''; document.getElementById('bien_so').value = item.bien_so || ''; document.getElementById('so_phieu').value = item.so_phieu || ''; document.getElementById('ngay_cap').value = item.ngay_cap || ''; document.getElementById('lit_cap').value = item.lit_cap || ''; document.getElementById('ngay_di').value = item.ngay_di || ''; document.getElementById('noi_di').value = item.noi_di || ''; document.getElementById('noi_den').value = item.noi_den || ''; document.getElementById('noi_dung').value = item.noi_dung || ''; document.getElementById('so_lct').value = item.so_lct || ''; document.getElementById('so_pct').value = item.so_pct || ''; document.getElementById('so_ptt').value = item.so_ptt || ''; document.getElementById('km_di').value = item.km_di || ''; document.getElementById('km_ve').value = item.km_ve || ''; document.getElementById('km_ht').value = item.km_ht || '';
-        }
-
-        function cloneRecord(id) {
-            const item = historyData.find(d => d.id === id); if(!item) return; fillForm(item);
-            currentEditId = null; loadedRecordId = id; const btnSave = document.getElementById('btn-save');
-            btnSave.innerText = "Lưu Phiếu Mới"; btnSave.classList.remove('edit-mode-btn');
-            document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
-            document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
-            showFormUIOnly(); document.getElementById('btn-inline-edit').classList.remove('hidden'); document.getElementById('btn-inline-delete').classList.remove('hidden'); document.getElementById('btn-inline-print').classList.remove('hidden');
-        }
-
-        function editRecord(event, id) {
-            event.stopPropagation(); const item = historyData.find(d => d.id === id); if(!item) return; fillForm(item);
-            currentEditId = item.id; loadedRecordId = item.id; const btnSave = document.getElementById('btn-save');
-            btnSave.innerText = "Cập Nhật Dữ Liệu"; btnSave.classList.add('edit-mode-btn');
-            document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
-            document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
-            showFormUIOnly(); document.getElementById('btn-inline-edit').classList.add('hidden'); document.getElementById('btn-inline-delete').classList.remove('hidden'); document.getElementById('btn-inline-print').classList.remove('hidden');
-        }
-
-        async function saveData() {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            const userEmail = user ? user.email : '';
-            const payload = {
-                ma_nv: document.getElementById('ma_nv').value, ten_nv: document.getElementById('ten_nv').value, don_vi: document.getElementById('don_vi').value, bien_so: document.getElementById('bien_so').value, so_phieu: document.getElementById('so_phieu').value, ngay_cap: document.getElementById('ngay_cap').value, lit_cap: document.getElementById('lit_cap').value, ngay_di: document.getElementById('ngay_di').value, noi_di: document.getElementById('noi_di').value, noi_den: document.getElementById('noi_den').value, noi_dung: document.getElementById('noi_dung').value, so_lct: document.getElementById('so_lct').value, so_pct: document.getElementById('so_pct').value, so_ptt: document.getElementById('so_ptt').value, km_di: document.getElementById('km_di').value, km_ve: document.getElementById('km_ve').value, km_ht: document.getElementById('km_ht').value, email_tao: userEmail
-            };
-
-            if (!payload.ma_nv || !payload.ten_nv || !payload.don_vi || !payload.bien_so || !payload.so_phieu || !payload.ngay_cap || !payload.lit_cap || !payload.ngay_di || !payload.noi_di || !payload.noi_den || !payload.noi_dung) {
-                showToast("Lỗi: Vui lòng điền đầy đủ thông tin vào các ô có dấu * màu đỏ!", "error"); return;
-            }
-            showLoader();
-            let result; if (currentEditId) { result = await supabaseClient.from('du_lieu').update(payload).eq('id', currentEditId); } else { result = await supabaseClient.from('du_lieu').insert([payload]); }
-            hideLoader();
-
-            if (result.error) { showToast('Lỗi khi lưu: ' + result.error.message, 'error'); } 
-            else {
-                showToast(currentEditId ? 'Đã cập nhật phiếu thành công!' : 'Thành công! Dữ liệu đã được lưu mới.', 'success');
-                currentEditId = null; loadedRecordId = null; const btnSave = document.getElementById('btn-save');
-                btnSave.innerText = "Lưu Phiếu Mới"; btnSave.classList.remove('edit-mode-btn');
-                document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
-                document.querySelectorAll('.remember-cb').forEach(el => el.classList.remove('edit-mode'));
-                document.getElementById('btn-inline-edit').classList.add('hidden'); document.getElementById('btn-inline-delete').classList.add('hidden'); document.getElementById('btn-inline-print').classList.add('hidden');
-                document.querySelectorAll('.data-input').forEach(input => {
-                    const cb = document.getElementById('rem_' + input.id);
-                    if (cb && cb.checked) { localStorage.setItem("draft_" + input.id, input.value); } else { localStorage.removeItem("draft_" + input.id); input.value = ''; }
-                });
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        }
     </script>
 </body>
 </html>
