@@ -19,7 +19,7 @@
             .hidden { display: none !important; }
             .group { background: #fff; border: 1px solid #e1e4e8; padding: 16px; margin-bottom: 16px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
             
-            .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; }
+            .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; flex-wrap: wrap; gap: 10px;}
             .group-header h3 { margin: 0; color: #1a73e8; font-size: 17px; transition: color 0.3s; }
             .group-header.edit-mode h3 { color: #d97706; } 
             .remember-cb.edit-mode { color: #d97706; font-weight: 600; }
@@ -68,7 +68,6 @@
             .btn-action { font-size: 18px; cursor: pointer; padding: 5px; user-select: none; }
             .sortable-ghost { opacity: 0.5; background-color: #e3f2fd; border: 2px dashed #1a73e8; } 
 
-            /* THIẾT KẾ CHO CHẾ ĐỘ IN (UI WEB) */
             .print-toggle-wrapper { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #17a2b8; font-weight: bold; cursor: pointer; }
             .print-toggle-wrapper input[type="checkbox"] { accent-color: #17a2b8; width: 18px; height: 18px; }
             
@@ -92,7 +91,7 @@
         }
 
         /* ============================================================== */
-        /* CSS ĐẶC BIỆT DÀNH CHO MÁY IN (IN LIÊN TRÁI & PHẢI TRÊN TỜ A4) */
+        /* CSS ĐẶC BIỆT DÀNH CHO MÁY IN (9.9CM - 2 LIÊN TRÁI/PHẢI)        */
         /* ============================================================== */
         @media print {
             body * { visibility: hidden; }
@@ -100,7 +99,6 @@
             
             #print-section { position: absolute; left: 0; top: 0; width: 21cm; margin: 0; padding: 0; background: white !important; color: #000; }
             
-            /* Dải 1 phiếu chạy dài từ trái sang phải, cao 9.9cm để in vừa 3 dải trên A4 (29.7cm) */
             .ticket-wrap {
                 width: 21cm; 
                 height: 9.9cm; 
@@ -108,31 +106,28 @@
                 border-bottom: 1px dashed #999;
                 font-family: "Times New Roman", Times, serif;
                 page-break-inside: avoid;
-                display: flex; /* CHIA ĐÔI MÀN HÌNH */
+                display: flex;
             }
             .ticket-wrap:last-child { border-bottom: none; }
             @page { size: A4 portrait; margin: 0; }
             
-            /* CÙI LƯU (BÊN TRÁI) - Chiếm 50% = 10.5cm */
             .half-left {
                 width: 50%; height: 100%; box-sizing: border-box;
                 padding: 0.5cm 0.5cm 0 1cm;
-                border-right: 1px dotted #ccc; /* Rãnh răng cưa giả lập */
+                border-right: 1px dotted #ccc;
             }
             
-            /* PHIẾU GIAO CHO NGƯỜI NHẬN (BÊN PHẢI) - Chiếm 50% = 10.5cm */
             .half-right {
                 width: 50%; height: 100%; box-sizing: border-box;
                 padding: 0.5cm 1cm 0 0.5cm;
             }
 
-            /* Định dạng chung cho chữ trong phiếu in */
             .pt-title { color: #0056b3 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 15px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px;}
-            .pt-row { font-size: 13px; line-height: 1.8; display: flex; align-items: flex-end; margin-bottom: 3px; }
+            .pt-row { font-size: 13px; line-height: 1.8; display: flex; align-items: flex-end; margin-bottom: 4px; }
             .pt-label { white-space: nowrap; margin-right: 5px; }
-            .pt-val { flex: 1; border-bottom: 1px dotted #000; font-weight: bold; padding: 0 3px; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+            .pt-val { flex: 1; border-bottom: 1px dotted #000; font-weight: bold; padding: 0 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
             .pt-val-empty { flex: 1; border-bottom: 1px dotted #000; }
-            .pt-date { text-align: right; font-style: italic; font-size: 13px; margin-top: 10px; margin-bottom: 15px;}
+            .pt-date { text-align: right; font-style: italic; font-size: 13px; margin-top: 15px; margin-bottom: 15px;}
             .pt-sign { display: flex; justify-content: space-between; text-align: center; font-size: 13px; font-weight: bold; }
             .pt-sign > div { width: 33.33%; }
         }
@@ -151,7 +146,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.20)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.21)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -205,11 +200,13 @@
             </div>
         </div>
 
+        <!-- TAB QUYẾT TOÁN NÂNG CẤP BỘ LỌC -->
         <div id="quyettoan-view" class="hidden">
             <div class="group">
                 <div class="group-header">
                     <h3>Bảng Quyết Toán (Bang QT)</h3>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <input type="text" id="filter-qt" placeholder="🔍 Lọc theo nội dung..." oninput="renderQTTable()" style="padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; max-width: 180px;">
                         <button class="btn-logout" onclick="exportExcelQT()" style="background-color: #28a745; color: white;">📥 Xuất Excel</button>
                         <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
                     </div>
@@ -218,13 +215,11 @@
             </div>
         </div>
 
-        <!-- TAB LỊCH SỬ (PHIÊN BẢN 1.20) -->
         <div id="history-view" class="hidden">
             <div class="group">
                 <div class="group-header" style="margin-bottom: 10px;">
                     <div style="display:flex; align-items:center; gap: 15px;">
                         <h3>Lịch sử</h3>
-                        <!-- CÔNG TẮC ẨN/HIỆN CHẾ ĐỘ IN -->
                         <label class="print-toggle-wrapper">
                             <input type="checkbox" id="toggle-print-mode" onchange="togglePrintMode()"> Mở In Phiếu
                         </label>
@@ -232,16 +227,13 @@
                     <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
                 </div>
                 
-                <!-- THANH CÔNG CỤ IN BỊ ẨN MẶC ĐỊNH -->
                 <div id="print-toolbar" class="toolbar hidden">
-                    <!-- Hàng 1: Bộ lọc ngày -->
                     <div class="toolbar-row" style="flex-wrap: wrap;">
                         <span style="font-size: 13px; font-weight:bold; color:#555;">Từ:</span>
                         <input type="date" id="filter-date-from" style="padding: 6px; border: 1px solid #ccc; border-radius: 6px; flex: 1; font-size:13px;" onchange="applyFilter()">
                         <span style="font-size: 13px; font-weight:bold; color:#555;">Đến:</span>
                         <input type="date" id="filter-date-to" style="padding: 6px; border: 1px solid #ccc; border-radius: 6px; flex: 1; font-size:13px;" onchange="applyFilter()">
                     </div>
-                    <!-- Hàng 2: Nút chọn và In -->
                     <div class="toolbar-row">
                         <label style="display: flex; align-items: center; gap: 5px; font-weight: bold; cursor: pointer; font-size:14px;">
                             <input type="checkbox" id="check-all" onchange="toggleCheckAll()"> Tất cả
@@ -289,7 +281,7 @@
 
             <div class="group">
                 <div class="group-header edit-target" style="border:none; padding-bottom: 0;">
-                    <h3>2. Thông tin cấp nhiên liệu</h3>
+                    <h3>2. Thông cải cấp nhiên liệu</h3>
                 </div>
                 <label class="title">Số phiếu cấp NL: <span class="req">*</span></label>
                 <div class="input-row">
@@ -389,6 +381,7 @@
         let loadedRecordId = null; 
         let historyData = [];      
         let displayedHistoryData = []; 
+        let currentQTData = []; // Biến chứa dữ liệu Quyết Toán để lọc
         let sortableInstance = null; 
 
         function showLoader() { document.getElementById('loader').classList.remove('hidden'); }
@@ -546,23 +539,21 @@
         }
 
         // ==========================================================
-        // KHU VỰC CÁC HÀM XỬ LÝ LỊCH SỬ & IN ẤN (PHIÊN BẢN 1.20)
+        // CÁC HÀM XỬ LÝ LỊCH SỬ & IN ẤN (PHIÊN BẢN 1.21)
         // ==========================================================
 
         function togglePrintMode() {
             let isPrintMode = document.getElementById('toggle-print-mode').checked;
             let toolbar = document.getElementById('print-toolbar');
-            
-            if(isPrintMode) {
-                toolbar.classList.remove('hidden');
-            } else {
+            if(isPrintMode) { toolbar.classList.remove('hidden'); } 
+            else {
                 toolbar.classList.add('hidden');
-                document.getElementById('check-all').checked = false; // Bỏ chọn tất cả
+                document.getElementById('check-all').checked = false; 
                 document.getElementById('filter-date-from').value = '';
                 document.getElementById('filter-date-to').value = '';
-                applyFilter(); // Trả lại danh sách ban đầu
+                applyFilter(); 
             }
-            renderHistory(displayedHistoryData); // Vẽ lại UI để hiện/ẩn checkbox
+            renderHistory(displayedHistoryData); 
         }
 
         function toggleCheckAll() {
@@ -579,7 +570,6 @@
         function applyFilter() {
             let fromDate = document.getElementById('filter-date-from').value;
             let toDate = document.getElementById('filter-date-to').value;
-            
             displayedHistoryData = historyData.filter(d => {
                 if(!d.ngay_cap) return false;
                 if(fromDate && d.ngay_cap < fromDate) return false;
@@ -589,21 +579,16 @@
             renderHistory(displayedHistoryData);
         }
 
-        // HÀM VẼ LẠI GIAO DIỆN LỊCH SỬ
         function renderHistory(dataToRender) {
             const container = document.getElementById('history-list');
             let isPrintMode = document.getElementById('toggle-print-mode').checked;
-            
-            document.getElementById('check-all').checked = false; 
-            updateSelectCount(); 
+            document.getElementById('check-all').checked = false; updateSelectCount(); 
 
             if (dataToRender.length === 0) { container.innerHTML = '<p style="text-align:center; color:#777;">Không có dữ liệu phù hợp.</p>'; return; }
 
             container.innerHTML = '';
             dataToRender.forEach((item) => {
-                // Nếu bật in -> Hiện Checkbox. Nếu tắt -> Ẩn Checkbox.
                 let checkboxHTML = isPrintMode ? `<input type="checkbox" class="item-checkbox" value="${item.id}" onclick="event.stopPropagation(); updateSelectCount();" style="width:18px;height:18px;accent-color:#1a73e8;cursor:pointer;">` : '';
-                
                 container.innerHTML += `
                     <div class="history-item" data-id="${item.id}" onclick="cloneRecord(${item.id})">
                         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
@@ -657,16 +642,13 @@
                 }
             } catch (e) {}
             historyData = data;
-            
-            // Xóa bộ lọc nếu đang có
             document.getElementById('filter-date-from').value = '';
             document.getElementById('filter-date-to').value = '';
             displayedHistoryData = historyData;
-            
             renderHistory(displayedHistoryData);
         }
 
-        // HÀM TẠO HTML PHIẾU IN (CHIA 2 NỬA TRÁI / PHẢI CHO 1 NGƯỜI)
+        // HÀM TẠO HTML PHIẾU IN (BẢN CHUẨN 9.9CM KHÔNG LIÊN 1/2)
         function executePrint(itemsArray) {
             let html = '';
             itemsArray.forEach(item => {
@@ -676,39 +658,50 @@
                     if(d.length === 3) dStr = `Ngày ${d[2]} tháng ${d[1]} năm 20${d[0].substring(2,4)}`;
                 }
                 
-                // MỘT BẢN THIẾT KẾ ĐƯỢC DÙNG CHUNG CHO CẢ TRÁI VÀ PHẢI
+                let soPhieu = item.so_phieu || '...............';
+                let donVi = item.don_vi || '.......................................';
+                let tenNv = item.ten_nv || '.......................................';
+                let litCap = item.lit_cap || '........';
+                let noiDung = item.noi_dung || '';
+
                 let ticketContent = `
                     <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px;">
                         <div class="pt-title">PHIẾU GIAO NHẬN XĂNG DẦU</div>
-                        <div style="font-size: 13px;">Số: <b>${item.so_phieu || '...............'}</b></div>
+                        <div style="font-size: 13px;">Số: <b>${soPhieu}</b></div>
                     </div>
-                    <div class="pt-row"><span class="pt-label">Đơn vị:</span><span class="pt-val">${item.don_vi || '.......................................'}</span></div>
-                    <div class="pt-row"><span class="pt-label">Người nhận:</span><span class="pt-val">${item.ten_nv || '.......................................'}</span></div>
+                    
+                    <div class="pt-row"><span class="pt-label">Đơn vị:</span><span class="pt-val">${donVi}</span></div>
+                    <div class="pt-row"><span class="pt-label">Người nhận:</span><span class="pt-val">${tenNv}</span></div>
+                    
                     <div class="pt-row">
-                        <span class="pt-label">Số lượng xăng:</span><span class="pt-val" style="flex: 0 0 60px;">${item.lit_cap || '........'}</span><span style="margin-left: 5px;">lít</span><span class="pt-val-empty"></span>
+                        <span class="pt-label">Số lượng xăng:</span><span class="pt-val" style="flex: 0 0 60px;">${litCap}</span><span style="margin-left: 5px;">lít</span><span class="pt-val-empty"></span>
                     </div>
+                    
                     <div class="pt-row"><span class="pt-label">Số lượng dầu:</span><span class="pt-val-empty"></span></div>
+                    <div class="pt-row"><span class="pt-label">Số lượng nhớt:</span><span class="pt-val-empty"></span></div>
+                    
                     <div class="pt-row">
-                        <span class="pt-label">Số lượng nhớt:</span><span class="pt-val-empty" style="flex: 1.2;"></span>
-                        <span class="pt-label" style="margin-left: 10px;">Đơn giá:</span><span class="pt-val-empty"></span><span style="margin-left: 5px;">đ/lít</span>
+                        <span class="pt-label">Đơn giá:</span><span class="pt-val-empty"></span><span style="margin-left: 5px;">đ/lít</span>
                     </div>
+                    
+                    <div class="pt-row" style="align-items: flex-start;">
+                        <span class="pt-label" style="margin-top: 3px;">Nội dung:</span>
+                        <div style="flex: 1; display: flex; flex-direction: column;">
+                            <div style="border-bottom: 1px dotted #000; height: 23px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${noiDung}</div>
+                            <div style="border-bottom: 1px dotted #000; height: 23px;"></div>
+                        </div>
+                    </div>
+
                     <div class="pt-date">${dStr}</div>
                     <div class="pt-sign">
                         <div>Người nhận</div><div>Người giao</div><div>Thủ trưởng ĐV</div>
                     </div>
                 `;
 
-                // Đổ vào 2 cột
                 html += `
                 <div class="ticket-wrap">
-                    <div class="half-left">
-                        <div style="font-size:10px; font-style:italic; text-align:right; margin-bottom:-5px; color:#555">Liên 1: Lưu</div>
-                        ${ticketContent}
-                    </div>
-                    <div class="half-right">
-                        <div style="font-size:10px; font-style:italic; text-align:right; margin-bottom:-5px; color:#555">Liên 2: Người giao</div>
-                        ${ticketContent}
-                    </div>
+                    <div class="half-left">${ticketContent}</div>
+                    <div class="half-right">${ticketContent}</div>
                 </div>`;
             });
             document.getElementById('print-section').innerHTML = html;
@@ -862,6 +855,7 @@
             html += '</tbody></table>'; container.innerHTML = html;
         }
 
+        // --- CẬP NHẬT: QUYẾT TOÁN CÓ BỘ LỌC NỘI DUNG ---
         async function loadQuyetToan() {
             const container = document.getElementById('quyettoan-list'); container.innerHTML = '<p style="text-align:center;">Đang tải...</p>';
             showLoader(); const { data, error } = await supabaseClient.from('du_lieu').select('*').order('ngay_cap', { ascending: true }).order('id', { ascending: true }); hideLoader();
@@ -874,17 +868,41 @@
                 groupedQT[row.ma_nv].lit += parseFloat(row.lit_cap || 0);
             });
 
-            let html = '<table class="dash-table qt-table">';
-            html += `<thead><tr><th>STT</th><th>Ngày, tháng cấp NL</th><th>Nội dung</th><th>Số lượng (lít)</th><th>Người nhận/Phương tiện</th><th>Đơn vị</th></tr></thead><tbody>`;
-            let tong_lit = 0; let idx = 1;
+            currentQTData = [];
             for (const ma_nv in groupedQT) {
-                let p = groupedQT[ma_nv]; tong_lit += p.lit;
+                let p = groupedQT[ma_nv];
                 let noidung = ""; let nguoi_nhan = ""; let donvi = "";
                 let nv_key = String(ma_nv).trim();
+                
                 if (MUC_DICH_THUE[nv_key]) { noidung = MUC_DICH_THUE[nv_key].muc_dich; nguoi_nhan = MUC_DICH_THUE[nv_key].ten_nv; donvi = MUC_DICH_THUE[nv_key].don_vi; } 
                 else { noidung = "Không tìm thấy tham chiếu"; nguoi_nhan = p.ten_goc; donvi = p.donvi_goc; }
-                html += `<tr><td style="text-align:center;">${idx++}</td><td style="text-align:center;">${formatDateDMY(p.ngay_cap)}</td><td>${noidung}</td><td style="text-align:center; font-weight:bold;">${p.lit}</td><td>${nguoi_nhan}</td><td style="text-align:center;">${donvi}</td></tr>`;
+                
+                currentQTData.push({ ngay_cap: p.ngay_cap, noidung: noidung, lit: p.lit, nguoi_nhan: nguoi_nhan, donvi: donvi });
             }
+            
+            document.getElementById('filter-qt').value = ''; // Reset bộ lọc mỗi khi tải
+            renderQTTable();
+        }
+
+        function renderQTTable() {
+            const container = document.getElementById('quyettoan-list');
+            const filterText = document.getElementById('filter-qt').value.toLowerCase().trim();
+            
+            let html = '<table class="dash-table qt-table">';
+            html += `<thead><tr><th>STT</th><th>Ngày, tháng cấp NL</th><th>Nội dung</th><th>Số lượng (lít)</th><th>Người nhận/Phương tiện</th><th>Đơn vị</th></tr></thead><tbody>`;
+            
+            let tong_lit = 0; let idx = 1;
+            
+            currentQTData.forEach(p => {
+                // Nếu có nhập chữ lọc mà nội dung không khớp -> Bỏ qua không hiển thị
+                if(filterText && !p.noidung.toLowerCase().includes(filterText)) return; 
+                
+                tong_lit += p.lit;
+                html += `<tr><td style="text-align:center;">${idx++}</td><td style="text-align:center;">${formatDateDMY(p.ngay_cap)}</td><td>${p.noidung}</td><td style="text-align:center; font-weight:bold;">${p.lit}</td><td>${p.nguoi_nhan}</td><td style="text-align:center;">${p.donvi}</td></tr>`;
+            });
+
+            if(idx === 1) { container.innerHTML = '<p style="text-align:center; padding: 15px; color:#555;">Không tìm thấy nội dung phù hợp.</p>'; return; }
+
             let formattedTongLit = Number.isInteger(tong_lit) ? tong_lit : tong_lit.toFixed(1);
             html += `<tr style="background-color: #fff3e0; border-top: 2px solid #1a73e8; font-weight: bold;"><td colspan="3" style="text-align: center; text-transform: uppercase;">Cộng</td><td style="text-align:center; color:#d93025; font-size: 15px;">${formattedTongLit}</td><td colspan="2"></td></tr>`;
             html += '</tbody></table>'; container.innerHTML = html;
