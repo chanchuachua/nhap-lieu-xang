@@ -39,8 +39,8 @@
             .input-row { display: flex; align-items: center; gap: 12px; }
             .input-wrapper { flex: 1; position: relative; }
             
-            input:not([type="checkbox"]) { width: 100%; padding: 12px; box-sizing: border-box; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; background-color: #fafafa; transition: background-color 0.3s; }
-            input:not([type="checkbox"]):focus { outline: none; border-color: #1a73e8; background-color: #fff; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+            input:not([type="checkbox"]), select { width: 100%; padding: 12px; box-sizing: border-box; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; background-color: #fafafa; transition: background-color 0.3s; }
+            input:not([type="checkbox"]):focus, select:focus { outline: none; border-color: #1a73e8; background-color: #fff; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
             .autofilled { background-color: #e8f0fe !important; border-color: #1a73e8 !important; }
             
             .remember-cb { font-size: 14px; color: #555; display: flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; padding: 10px 0; user-select: none; transition: 0.3s; }
@@ -146,7 +146,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.21)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.22)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -200,13 +200,15 @@
             </div>
         </div>
 
-        <!-- TAB QUYẾT TOÁN NÂNG CẤP BỘ LỌC -->
+        <!-- TAB QUYẾT TOÁN VỚI DROPDOWN LIST -->
         <div id="quyettoan-view" class="hidden">
             <div class="group">
                 <div class="group-header">
                     <h3>Bảng Quyết Toán (Bang QT)</h3>
                     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                        <input type="text" id="filter-qt" placeholder="🔍 Lọc theo nội dung..." oninput="renderQTTable()" style="padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; max-width: 180px;">
+                        <select id="filter-qt" onchange="renderQTTable()" style="padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; max-width: 220px; text-overflow: ellipsis;">
+                            <option value="">🔍 Tất cả nội dung</option>
+                        </select>
                         <button class="btn-logout" onclick="exportExcelQT()" style="background-color: #28a745; color: white;">📥 Xuất Excel</button>
                         <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
                     </div>
@@ -281,7 +283,7 @@
 
             <div class="group">
                 <div class="group-header edit-target" style="border:none; padding-bottom: 0;">
-                    <h3>2. Thông cải cấp nhiên liệu</h3>
+                    <h3>2. Thông tin cấp nhiên liệu</h3>
                 </div>
                 <label class="title">Số phiếu cấp NL: <span class="req">*</span></label>
                 <div class="input-row">
@@ -538,10 +540,6 @@
             }
         }
 
-        // ==========================================================
-        // CÁC HÀM XỬ LÝ LỊCH SỬ & IN ẤN (PHIÊN BẢN 1.21)
-        // ==========================================================
-
         function togglePrintMode() {
             let isPrintMode = document.getElementById('toggle-print-mode').checked;
             let toolbar = document.getElementById('print-toolbar');
@@ -648,7 +646,6 @@
             renderHistory(displayedHistoryData);
         }
 
-        // HÀM TẠO HTML PHIẾU IN (BẢN CHUẨN 9.9CM KHÔNG LIÊN 1/2)
         function executePrint(itemsArray) {
             let html = '';
             itemsArray.forEach(item => {
@@ -855,7 +852,7 @@
             html += '</tbody></table>'; container.innerHTML = html;
         }
 
-        // --- CẬP NHẬT: QUYẾT TOÁN CÓ BỘ LỌC NỘI DUNG ---
+        // --- QUYẾT TOÁN CÓ DROPDOWN LIST ---
         async function loadQuyetToan() {
             const container = document.getElementById('quyettoan-list'); container.innerHTML = '<p style="text-align:center;">Đang tải...</p>';
             showLoader(); const { data, error } = await supabaseClient.from('du_lieu').select('*').order('ngay_cap', { ascending: true }).order('id', { ascending: true }); hideLoader();
@@ -880,13 +877,22 @@
                 currentQTData.push({ ngay_cap: p.ngay_cap, noidung: noidung, lit: p.lit, nguoi_nhan: nguoi_nhan, donvi: donvi });
             }
             
-            document.getElementById('filter-qt').value = ''; // Reset bộ lọc mỗi khi tải
+            // Lấy danh sách nội dung không trùng lặp để đưa vào Dropdown
+            const filterSelect = document.getElementById('filter-qt');
+            const uniqueContents = [...new Set(currentQTData.map(item => item.noidung))].filter(n => n);
+            let optionsHTML = '<option value="">🔍 Tất cả nội dung</option>';
+            uniqueContents.forEach(content => {
+                optionsHTML += `<option value="${content}">${content}</option>`;
+            });
+            filterSelect.innerHTML = optionsHTML;
+
+            filterSelect.value = ''; // Reset bộ lọc mỗi khi tải lại tab
             renderQTTable();
         }
 
         function renderQTTable() {
             const container = document.getElementById('quyettoan-list');
-            const filterText = document.getElementById('filter-qt').value.toLowerCase().trim();
+            const filterText = document.getElementById('filter-qt').value;
             
             let html = '<table class="dash-table qt-table">';
             html += `<thead><tr><th>STT</th><th>Ngày, tháng cấp NL</th><th>Nội dung</th><th>Số lượng (lít)</th><th>Người nhận/Phương tiện</th><th>Đơn vị</th></tr></thead><tbody>`;
@@ -894,8 +900,8 @@
             let tong_lit = 0; let idx = 1;
             
             currentQTData.forEach(p => {
-                // Nếu có nhập chữ lọc mà nội dung không khớp -> Bỏ qua không hiển thị
-                if(filterText && !p.noidung.toLowerCase().includes(filterText)) return; 
+                // Nếu dropdown có chọn 1 nội dung cụ thể mà không khớp -> Bỏ qua
+                if(filterText && p.noidung !== filterText) return; 
                 
                 tong_lit += p.lit;
                 html += `<tr><td style="text-align:center;">${idx++}</td><td style="text-align:center;">${formatDateDMY(p.ngay_cap)}</td><td>${p.noidung}</td><td style="text-align:center; font-weight:bold;">${p.lit}</td><td>${p.nguoi_nhan}</td><td style="text-align:center;">${p.donvi}</td></tr>`;
