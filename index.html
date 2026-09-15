@@ -10,9 +10,6 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     
     <style>
-        /* ============================================================== */
-        /* CSS CHO GIAO DIỆN WEB (MÀN HÌNH ĐIỆN THOẠI / MÁY TÍNH)         */
-        /* ============================================================== */
         @media screen {
             #print-section { display: none; }
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 12px; max-width: 550px; margin: auto; background-color: #f0f2f5; color: #333; }
@@ -90,9 +87,6 @@
             .dash-table th { background-color: #e9ecef; color: #1a73e8; text-align: center; font-weight: bold; white-space: nowrap; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.2); }
         }
 
-        /* ============================================================== */
-        /* CSS ĐẶC BIỆT DÀNH CHO MÁY IN (9.9CM - 2 LIÊN TRÁI/PHẢI)        */
-        /* ============================================================== */
         @media print {
             body * { visibility: hidden; }
             #print-section, #print-section * { visibility: visible; }
@@ -146,7 +140,7 @@
     <div id="login-form">
         <div class="group">
             <div class="group-header" style="border:none; padding-bottom: 5px;">
-                <h3>Đăng Nhập Giải Trình Xăng (1.22)</h3>
+                <h3>Đăng Nhập Giải Trình Xăng (1.23)</h3>
             </div>
             <div class="input-wrapper" style="margin-bottom: 12px;">
                 <input type="email" id="email" placeholder="Email (VD: 34340@c3.com)">
@@ -200,7 +194,6 @@
             </div>
         </div>
 
-        <!-- TAB QUYẾT TOÁN VỚI DROPDOWN LIST -->
         <div id="quyettoan-view" class="hidden">
             <div class="group">
                 <div class="group-header">
@@ -285,12 +278,11 @@
                 <div class="group-header edit-target" style="border:none; padding-bottom: 0;">
                     <h3>2. Thông tin cấp nhiên liệu</h3>
                 </div>
-                <label class="title">Số phiếu cấp NL: <span class="req">*</span></label>
+                <label class="title">Số phiếu cấp NL (Hệ thống tự động cấp):</label>
                 <div class="input-row">
-                    <div class="input-wrapper"><input type="text" id="so_phieu" class="data-input" placeholder="Nhập số phiếu"></div>
-                    <label class="remember-cb"><input type="checkbox" id="rem_so_phieu" checked> Ghi nhớ</label>
+                    <div class="input-wrapper"><input type="text" id="so_phieu" class="data-input" placeholder="Tự tạo khi lưu (VD: 2026/00001)" readonly style="background-color: #e9ecef; cursor: not-allowed; font-weight: bold; color: #1a73e8; text-align: center;"></div>
                 </div>
-                <label class="title">Ngày cấp NL (Mốc lọc báo cáo): <span class="req">*</span></label>
+                <label class="title">Ngày cấp NL (Mốc tạo năm phiếu): <span class="req">*</span></label>
                 <div class="input-row">
                     <div class="input-wrapper"><input type="date" id="ngay_cap" class="data-input"></div>
                     <label class="remember-cb"><input type="checkbox" id="rem_ngay_cap" checked> Ghi nhớ</label>
@@ -368,7 +360,7 @@
         </div>
     </div>
 
-    <!-- KHU VỰC ẨN DÀNH RIÊNG CHO MÁY IN -->
+<!-- KHU VỰC ẨN DÀNH RIÊNG CHO MÁY IN -->
     <div id="print-section"></div>
 
     <script>
@@ -383,7 +375,7 @@
         let loadedRecordId = null; 
         let historyData = [];      
         let displayedHistoryData = []; 
-        let currentQTData = []; // Biến chứa dữ liệu Quyết Toán để lọc
+        let currentQTData = []; 
         let sortableInstance = null; 
 
         function showLoader() { document.getElementById('loader').classList.remove('hidden'); }
@@ -509,6 +501,7 @@
                     const cb = document.getElementById('rem_' + input.id);
                     if (cb && cb.checked) { input.value = localStorage.getItem("draft_" + input.id) || ''; } else { input.value = ''; }
                 });
+                document.getElementById('so_phieu').value = ''; // Luôn làm rỗng để tạo mới
             } else if (tab === 'history') {
                 document.getElementById('history-view').classList.remove('hidden'); loadHistory();
             } else if (tab === 'dashboard') {
@@ -600,9 +593,10 @@
                             </div>
                         </div>
                         <div class="history-desc">
+                            <strong>Số phiếu:</strong> <span style="color:#d93025">${item.so_phieu || 'Chưa có'}</span> <br>
                             <strong>Ngày đi:</strong> ${item.ngay_di || 'Trống'} <br>
                             <strong>Nội dung:</strong> ${item.noi_dung || 'Trống'} <br>
-                            <strong>Nhân viên:</strong> ${item.ten_nv} (${item.ma_nv}) - Số lít: <b style="color:#d93025">${item.lit_cap}</b>
+                            <strong>Nhân viên:</strong> ${item.ten_nv} (${item.ma_nv}) - Số lít: <b>${item.lit_cap}</b>
                         </div>
                     </div>
                 `;
@@ -664,7 +658,7 @@
                 let ticketContent = `
                     <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px;">
                         <div class="pt-title">PHIẾU GIAO NHẬN XĂNG DẦU</div>
-                        <div style="font-size: 13px;">Số: <b>${soPhieu}</b></div>
+                        <div style="font-size: 13px;">Số: <b style="color:red;">${soPhieu}</b></div>
                     </div>
                     
                     <div class="pt-row"><span class="pt-label">Đơn vị:</span><span class="pt-val">${donVi}</span></div>
@@ -756,6 +750,7 @@
 
         function cloneRecord(id) {
             const item = historyData.find(d => d.id === id); if(!item) return; fillForm(item);
+            document.getElementById('so_phieu').value = ''; // Luôn rỗng để máy tạo số mới
             currentEditId = null; loadedRecordId = id; const btnSave = document.getElementById('btn-save');
             btnSave.innerText = "Lưu Phiếu Mới"; btnSave.classList.remove('edit-mode-btn');
             document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
@@ -772,11 +767,43 @@
             showFormUIOnly(); document.getElementById('btn-inline-edit').classList.add('hidden'); document.getElementById('btn-inline-delete').classList.remove('hidden');
         }
 
+        // HÀM LƯU DỮ LIỆU ĐÃ TÍCH HỢP TỰ ĐỘNG CẤP SỐ PHIẾU
         async function saveData() {
             const { data: { user } } = await supabaseClient.auth.getUser();
             const userEmail = user ? user.email : '';
+            
+            let soPhieuVal = document.getElementById('so_phieu').value;
+            let ngayCapVal = document.getElementById('ngay_cap').value;
+
+            if (!ngayCapVal) {
+                showToast("Lỗi: Vui lòng nhập Ngày cấp NL trước!", "error"); return;
+            }
+            
+            let year = ngayCapVal.split('-')[0]; // Lấy năm từ ngày cấp NL
+
+            // Tự động cấp số nếu là lưu mới
+            if (!currentEditId) {
+                showLoader();
+                const { data: maxData, error: maxError } = await supabaseClient
+                    .from('du_lieu')
+                    .select('so_phieu')
+                    .like('so_phieu', `${year}/%`)
+                    .order('so_phieu', { ascending: false })
+                    .limit(1);
+                
+                let nextNum = 1;
+                if (maxData && maxData.length > 0 && maxData[0].so_phieu) {
+                    let parts = maxData[0].so_phieu.split('/');
+                    if (parts.length === 2 && !isNaN(parts[1])) {
+                        nextNum = parseInt(parts[1]) + 1;
+                    }
+                }
+                soPhieuVal = `${year}/${String(nextNum).padStart(5, '0')}`;
+                hideLoader();
+            }
+
             const payload = {
-                ma_nv: document.getElementById('ma_nv').value, ten_nv: document.getElementById('ten_nv').value, don_vi: document.getElementById('don_vi').value, bien_so: document.getElementById('bien_so').value, so_phieu: document.getElementById('so_phieu').value, ngay_cap: document.getElementById('ngay_cap').value, lit_cap: document.getElementById('lit_cap').value, ngay_di: document.getElementById('ngay_di').value, noi_di: document.getElementById('noi_di').value, noi_den: document.getElementById('noi_den').value, noi_dung: document.getElementById('noi_dung').value, so_lct: document.getElementById('so_lct').value, so_pct: document.getElementById('so_pct').value, so_ptt: document.getElementById('so_ptt').value, km_di: document.getElementById('km_di').value, km_ve: document.getElementById('km_ve').value, km_ht: document.getElementById('km_ht').value, email_tao: userEmail
+                ma_nv: document.getElementById('ma_nv').value, ten_nv: document.getElementById('ten_nv').value, don_vi: document.getElementById('don_vi').value, bien_so: document.getElementById('bien_so').value, so_phieu: soPhieuVal, ngay_cap: document.getElementById('ngay_cap').value, lit_cap: document.getElementById('lit_cap').value, ngay_di: document.getElementById('ngay_di').value, noi_di: document.getElementById('noi_di').value, noi_den: document.getElementById('noi_den').value, noi_dung: document.getElementById('noi_dung').value, so_lct: document.getElementById('so_lct').value, so_pct: document.getElementById('so_pct').value, so_ptt: document.getElementById('so_ptt').value, km_di: document.getElementById('km_di').value, km_ve: document.getElementById('km_ve').value, km_ht: document.getElementById('km_ht').value, email_tao: userEmail
             };
 
             if (!payload.ma_nv || !payload.ten_nv || !payload.don_vi || !payload.bien_so || !payload.so_phieu || !payload.ngay_cap || !payload.lit_cap || !payload.ngay_di || !payload.noi_di || !payload.noi_den || !payload.noi_dung) {
@@ -798,6 +825,7 @@
                     const cb = document.getElementById('rem_' + input.id);
                     if (cb && cb.checked) { localStorage.setItem("draft_" + input.id, input.value); } else { localStorage.removeItem("draft_" + input.id); input.value = ''; }
                 });
+                document.getElementById('so_phieu').value = '';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
@@ -844,7 +872,7 @@
                 group.trips.forEach((trip, idx) => {
                     const kmDi = parseFloat(trip.km_di) || 0; const kmVe = parseFloat(trip.km_ve) || 0; const kmHt = parseFloat(trip.km_ht) || 0;
                     const tongKm = (kmVe > kmDi) ? (kmVe - kmDi + kmHt) : kmHt;
-                    html += `<tr><td style="text-align:center;">${idx + 1}</td><td style="text-align:center;">${trip.so_phieu || ''}</td><td style="text-align:center;">${formatShortDate(trip.ngay_cap)}</td><td style="text-align:center;">${trip.lit_cap || ''}</td><td style="text-align:center;">${trip.ngay_di || ''}</td><td>${trip.noi_di || ''}</td><td>${trip.noi_den || ''}</td><td>${trip.noi_dung || ''}</td><td style="text-align:center;">${trip.so_lct || ''}</td><td style="text-align:center;">${trip.so_pct || ''}</td><td style="text-align:center;">${trip.so_ptt || ''}</td><td style="text-align:center;">${trip.bien_so || ''}</td><td style="text-align:center;">${trip.km_di || ''}</td><td style="text-align:center;">${trip.km_ve || ''}</td><td style="text-align:center;">${trip.km_ht || ''}</td><td style="text-align:center; font-weight:bold;">${tongKm}</td><td style="text-align:center; font-weight:bold;">${trip.lit_cap || ''}</td><td style="text-align:center;">${trip.don_vi || ''}</td></tr>`;
+                    html += `<tr><td style="text-align:center;">${idx + 1}</td><td style="text-align:center; color:red; font-weight:bold;">${trip.so_phieu || ''}</td><td style="text-align:center;">${formatShortDate(trip.ngay_cap)}</td><td style="text-align:center;">${trip.lit_cap || ''}</td><td style="text-align:center;">${trip.ngay_di || ''}</td><td>${trip.noi_di || ''}</td><td>${trip.noi_den || ''}</td><td>${trip.noi_dung || ''}</td><td style="text-align:center;">${trip.so_lct || ''}</td><td style="text-align:center;">${trip.so_pct || ''}</td><td style="text-align:center;">${trip.so_ptt || ''}</td><td style="text-align:center;">${trip.bien_so || ''}</td><td style="text-align:center;">${trip.km_di || ''}</td><td style="text-align:center;">${trip.km_ve || ''}</td><td style="text-align:center;">${trip.km_ht || ''}</td><td style="text-align:center; font-weight:bold;">${tongKm}</td><td style="text-align:center; font-weight:bold;">${trip.lit_cap || ''}</td><td style="text-align:center;">${trip.don_vi || ''}</td></tr>`;
                 });
                 let formattedLit = Number.isInteger(group.tong_lit) ? group.tong_lit : group.tong_lit.toFixed(1);
                 html += `<tr style="background-color: #fff3e0; border-bottom: 2px solid #ccc; font-weight: bold;"><td colspan="15" style="text-align: right; padding-right: 10px;">Tổng cộng (${group.tong_phieu} phiếu):</td><td style="text-align:center;">${group.tong_km}</td><td style="text-align:center; color:#d93025; font-size: 14px;">${formattedLit}</td><td></td></tr>`;
@@ -852,7 +880,6 @@
             html += '</tbody></table>'; container.innerHTML = html;
         }
 
-        // --- QUYẾT TOÁN CÓ DROPDOWN LIST ---
         async function loadQuyetToan() {
             const container = document.getElementById('quyettoan-list'); container.innerHTML = '<p style="text-align:center;">Đang tải...</p>';
             showLoader(); const { data, error } = await supabaseClient.from('du_lieu').select('*').order('ngay_cap', { ascending: true }).order('id', { ascending: true }); hideLoader();
@@ -877,7 +904,6 @@
                 currentQTData.push({ ngay_cap: p.ngay_cap, noidung: noidung, lit: p.lit, nguoi_nhan: nguoi_nhan, donvi: donvi });
             }
             
-            // Lấy danh sách nội dung không trùng lặp để đưa vào Dropdown
             const filterSelect = document.getElementById('filter-qt');
             const uniqueContents = [...new Set(currentQTData.map(item => item.noidung))].filter(n => n);
             let optionsHTML = '<option value="">🔍 Tất cả nội dung</option>';
@@ -886,7 +912,7 @@
             });
             filterSelect.innerHTML = optionsHTML;
 
-            filterSelect.value = ''; // Reset bộ lọc mỗi khi tải lại tab
+            filterSelect.value = ''; 
             renderQTTable();
         }
 
@@ -900,7 +926,6 @@
             let tong_lit = 0; let idx = 1;
             
             currentQTData.forEach(p => {
-                // Nếu dropdown có chọn 1 nội dung cụ thể mà không khớp -> Bỏ qua
                 if(filterText && p.noidung !== filterText) return; 
                 
                 tong_lit += p.lit;
