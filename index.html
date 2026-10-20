@@ -371,7 +371,18 @@
                     <label class="remember-cb"><input type="checkbox" id="rem_km_ve" checked> Ghi nhớ</label>
                 </div>
                 
-                <!-- Hiển thị kết quả tự động tính -->
+                <!-- TRẢ LẠI DÒNG KM HIỆN TRƯỜNG NHƯNG KHÓA CỨNG LẠI -->
+                <label class="title">Số km hiện trường (Đã khóa):</label>
+                <div class="input-row">
+                    <div class="input-wrapper">
+                        <input type="number" id="km_ht" class="data-input" placeholder="Không cần nhập" readonly style="background-color: #e9ecef; cursor: not-allowed; color: #6c757d;" value="0">
+                    </div>
+                    <label class="remember-cb" style="opacity: 0.5; cursor: not-allowed;">
+                        <input type="checkbox" id="rem_km_ht" disabled> Ghi nhớ
+                    </label>
+                </div>
+                
+                <!-- BẢNG TỰ ĐỘNG TÍNH TOÁN -->
                 <div style="background-color: #f8f9fa; border: 1px dashed #1a73e8; border-radius: 8px; padding: 12px; margin-top: 15px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                         <span style="font-weight: 600; font-size: 14px; color: #555;">Tổng quãng đường:</span>
@@ -382,9 +393,6 @@
                         <span style="font-weight: bold; font-size: 15px; color: #d93025;"><span id="hien_thi_lit">0.0</span> Lít</span>
                     </div>
                 </div>
-                
-                <!-- Giữ lại ô km_ht bị ẩn để tránh lỗi Javascript cũ -->
-                <input type="hidden" id="km_ht" value="0">
             </div>
 
             <button id="btn-save" onclick="saveData()">Lưu Phiếu Mới</button>
@@ -873,7 +881,24 @@
             }
 
             const payload = {
-                ma_nv: document.getElementById('ma_nv').value, ten_nv: document.getElementById('ten_nv').value, don_vi: document.getElementById('don_vi').value, bien_so: document.getElementById('bien_so').value, so_phieu: soPhieuVal, ngay_cap: document.getElementById('ngay_cap').value, lit_cap: document.getElementById('lit_cap').value, ngay_di: document.getElementById('ngay_di').value, noi_di: document.getElementById('noi_di').value, noi_den: document.getElementById('noi_den').value, noi_dung: document.getElementById('noi_dung').value, so_lct: document.getElementById('so_lct').value, so_pct: document.getElementById('so_pct').value, so_ptt: document.getElementById('so_ptt').value, km_di: document.getElementById('km_di').value, km_ve: document.getElementById('km_ve').value, km_ht: document.getElementById('km_ht').value, email_tao: userEmail
+                ma_nv: document.getElementById('ma_nv').value, 
+                ten_nv: document.getElementById('ten_nv').value, 
+                don_vi: document.getElementById('don_vi').value, 
+                bien_so: document.getElementById('bien_so').value, 
+                so_phieu: soPhieuVal, 
+                ngay_cap: document.getElementById('ngay_cap').value, 
+                lit_cap: document.getElementById('lit_cap').value, 
+                ngay_di: document.getElementById('ngay_di').value, 
+                noi_di: document.getElementById('noi_di').value, 
+                noi_den: document.getElementById('noi_den').value, 
+                noi_dung: document.getElementById('noi_dung').value, 
+                so_lct: document.getElementById('so_lct').value, 
+                so_pct: document.getElementById('so_pct').value, 
+                so_ptt: document.getElementById('so_ptt').value, 
+                km_di: document.getElementById('km_di').value, 
+                km_ve: document.getElementById('km_ve').value, 
+                km_ht: document.getElementById('km_ht') ? document.getElementById('km_ht').value : 0, 
+                email_tao: userEmail
             };
 
             if (!payload.ma_nv || !payload.ten_nv || !payload.don_vi || !payload.bien_so || !payload.so_phieu || !payload.ngay_cap || !payload.lit_cap || !payload.ngay_di || !payload.noi_di || !payload.noi_den || !payload.noi_dung) {
