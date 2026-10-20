@@ -362,23 +362,29 @@
                 </div>
                 <label class="title">Số km công tơ - Đi:</label>
                 <div class="input-row">
-                    <div class="input-wrapper"><input type="number" id="km_di" class="data-input" placeholder="Số lúc đi"></div>
+                    <div class="input-wrapper"><input type="number" id="km_di" class="data-input" placeholder="Số lúc đi" oninput="tinhToanQuangDuong()"></div>
                     <label class="remember-cb"><input type="checkbox" id="rem_km_di" checked> Ghi nhớ</label>
                 </div>
                 <label class="title">Số km công tơ - Về:</label>
                 <div class="input-row">
-                    <div class="input-wrapper"><input type="number" id="km_ve" class="data-input" placeholder="Số lúc về"></div>
+                    <div class="input-wrapper"><input type="number" id="km_ve" class="data-input" placeholder="Số lúc về" oninput="tinhToanQuangDuong()"></div>
                     <label class="remember-cb"><input type="checkbox" id="rem_km_ve" checked> Ghi nhớ</label>
                 </div>
-                <label class="title">Số km hiện trường (Đã khóa):</label>
-                <div class="input-row">
-                    <div class="input-wrapper">
-                        <input type="number" id="km_ht" class="data-input" placeholder="Không cần nhập" readonly style="background-color: #e9ecef; cursor: not-allowed; color: #6c757d;">
+                
+                <!-- Hiển thị kết quả tự động tính -->
+                <div style="background-color: #f8f9fa; border: 1px dashed #1a73e8; border-radius: 8px; padding: 12px; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-weight: 600; font-size: 14px; color: #555;">Tổng quãng đường:</span>
+                        <span style="font-weight: bold; font-size: 15px; color: #1a73e8;"><span id="hien_thi_km">0</span> Km</span>
                     </div>
-                    <label class="remember-cb" style="opacity: 0.5; cursor: not-allowed;">
-                        <input type="checkbox" id="rem_km_ht" disabled> Ghi nhớ
-                    </label>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-weight: 600; font-size: 14px; color: #555;">Định mức tiêu hao (Km/40):</span>
+                        <span style="font-weight: bold; font-size: 15px; color: #d93025;"><span id="hien_thi_lit">0.0</span> Lít</span>
+                    </div>
                 </div>
+                
+                <!-- Giữ lại ô km_ht bị ẩn để tránh lỗi Javascript cũ -->
+                <input type="hidden" id="km_ht" value="0">
             </div>
 
             <button id="btn-save" onclick="saveData()">Lưu Phiếu Mới</button>
@@ -414,6 +420,29 @@
             container.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
+        }
+
+        function tinhToanQuangDuong() {
+            let kmDi = parseFloat(document.getElementById('km_di').value) || 0;
+            let kmVe = parseFloat(document.getElementById('km_ve').value) || 0;
+            
+            let hienThiKm = document.getElementById('hien_thi_km');
+            let hienThiLit = document.getElementById('hien_thi_lit');
+            
+            // Nếu có nhập số và Về >= Đi
+            if (kmVe >= kmDi && document.getElementById('km_di').value !== '' && document.getElementById('km_ve').value !== '') {
+                let tongKm = kmVe - kmDi;
+                let tongLit = tongKm / 40;
+                
+                hienThiKm.innerText = tongKm;
+                hienThiLit.innerText = tongLit.toFixed(1); // Lấy 1 số lẻ
+                
+                // Tùy chọn: Tự động điền số lít này lên ô "Số lít cấp" ở mục 2
+                // document.getElementById('lit_cap').value = Math.ceil(tongLit); // Bỏ comment dòng này nếu muốn tự động điền (làm tròn lên)
+            } else {
+                hienThiKm.innerText = "0";
+                hienThiLit.innerText = "0.0";
+            }
         }
 
         function formatShortDate(dateStr) {
