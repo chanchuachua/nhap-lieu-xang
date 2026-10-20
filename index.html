@@ -305,24 +305,28 @@
                 </div>
                 <label class="title">Nơi đi: <span class="req">*</span></label>
                 <div class="input-row">
-                    <div class="input-wrapper">
-                        <input type="text" id="noi_di" list="list-noidi" class="data-input" placeholder="Chọn hoặc nhập nơi đi...">
-                        <datalist id="list-noidi">
-                            <option value="Điện lực Lai Vung">
-                        </datalist>
+                    <div class="input-wrapper" style="display: flex;">
+                        <!-- Ô gõ chữ chính -->
+                        <input type="text" id="noi_di" class="data-input" placeholder="Chọn hoặc nhập nơi đi..." style="flex: 1; border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;">
+                        <!-- Mũi tên xổ xuống luôn hiển thị tất cả -->
+                        <select id="noi_di_select" style="width: 40px; border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 5px;" onchange="document.getElementById('noi_di').value = this.value; this.value='';">
+                            <option value="" disabled selected>▼</option>
+                            <option value="Điện lực Lai Vung">Điện lực Lai Vung</option>
+                        </select>
                     </div>
                     <label class="remember-cb"><input type="checkbox" id="rem_noi_di" checked> Ghi nhớ</label>
                 </div>
                 
                 <label class="title">Nơi đến: <span class="req">*</span></label>
                 <div class="input-row">
-                    <div class="input-wrapper">
-                        <input type="text" id="noi_den" list="list-noiden" class="data-input" placeholder="Chọn hoặc nhập nơi đến...">
-                        <datalist id="list-noiden">
-                            <option value="xã Hòa Long">
-                            <option value="xã Lai Vung">
-                            <option value="xã Phong Hòa">
-                        </datalist>
+                    <div class="input-wrapper" style="display: flex;">
+                        <input type="text" id="noi_den" class="data-input" placeholder="Chọn hoặc nhập nơi đến..." style="flex: 1; border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;">
+                        <select id="noi_den_select" style="width: 40px; border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 5px;" onchange="document.getElementById('noi_den').value = this.value; this.value='';">
+                            <option value="" disabled selected>▼</option>
+                            <option value="xã Hòa Long">xã Hòa Long</option>
+                            <option value="xã Lai Vung">xã Lai Vung</option>
+                            <option value="xã Phong Hòa">xã Phong Hòa</option>
+                        </select>
                     </div>
                     <label class="remember-cb"><input type="checkbox" id="rem_noi_den" checked> Ghi nhớ</label>
                 </div>
