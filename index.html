@@ -370,10 +370,14 @@
                     <div class="input-wrapper"><input type="number" id="km_ve" class="data-input" placeholder="Số lúc về"></div>
                     <label class="remember-cb"><input type="checkbox" id="rem_km_ve" checked> Ghi nhớ</label>
                 </div>
-                <label class="title">Số km hiện trường:</label>
+                <label class="title">Số km hiện trường (Đã khóa):</label>
                 <div class="input-row">
-                    <div class="input-wrapper"><input type="number" id="km_ht" class="data-input" placeholder="Km di chuyển tại chỗ"></div>
-                    <label class="remember-cb"><input type="checkbox" id="rem_km_ht" checked> Ghi nhớ</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="km_ht" class="data-input" placeholder="Không cần nhập" readonly style="background-color: #e9ecef; cursor: not-allowed; color: #6c757d;">
+                    </div>
+                    <label class="remember-cb" style="opacity: 0.5; cursor: not-allowed;">
+                        <input type="checkbox" id="rem_km_ht" disabled> Ghi nhớ
+                    </label>
                 </div>
             </div>
 
