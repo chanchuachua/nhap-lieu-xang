@@ -814,10 +814,18 @@
             document.getElementById('ten_nv').value = item.ten_nv || ''; 
             document.getElementById('don_vi').value = item.don_vi || ''; 
             document.getElementById('bien_so').value = item.bien_so || ''; 
-            document.getElementById('so_phieu').value = item.so_phieu || ''; // Điền số phiếu vào form
+            document.getElementById('so_phieu').value = item.so_phieu || ''; 
             document.getElementById('ngay_cap').value = item.ngay_cap || ''; 
             document.getElementById('lit_cap').value = item.lit_cap || ''; 
-            document.getElementById('ngay_di').value = item.ngay_di || ''; 
+            
+            // TỰ ĐỘNG DỊCH NGÀY CŨ SANG CHUẨN LỊCH MỚI
+            let ngayDiStr = item.ngay_di || '';
+            if (ngayDiStr.includes('/') && ngayDiStr.length === 10) {
+                let parts = ngayDiStr.split('/');
+                if (parts.length === 3) ngayDiStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            document.getElementById('ngay_di').value = ngayDiStr; 
+            
             document.getElementById('noi_di').value = item.noi_di || ''; 
             document.getElementById('noi_den').value = item.noi_den || ''; 
             document.getElementById('noi_dung').value = item.noi_dung || ''; 
@@ -826,7 +834,6 @@
             document.getElementById('so_ptt').value = item.so_ptt || ''; 
             document.getElementById('km_di').value = item.km_di || ''; 
             document.getElementById('km_ve').value = item.km_ve || ''; 
-            // document.getElementById('km_ht').value = item.km_ht || '';
         }
 
         function cloneRecord(id) {
@@ -859,30 +866,28 @@
             let soPhieuVal = document.getElementById('so_phieu').value;
             let ngayCapVal = document.getElementById('ngay_cap').value;
 
-            // Xóa cảnh báo đỏ (nếu có) trước khi kiểm tra lại
             document.getElementById('km_ve').classList.remove('input-error');
 
             if (!ngayCapVal) {
                 showToast("Lỗi: Vui lòng nhập Ngày cấp NL trước!", "error"); return;
             }
             
-            // --- KIỂM TRA LOGIC SỐ KM ---
             let kmDiVal = parseFloat(document.getElementById('km_di').value) || 0;
             let kmVeVal = parseFloat(document.getElementById('km_ve').value) || 0;
             
-            // Nếu có nhập cả 2 số, mà số Về lại nhỏ hơn số Đi thì chặn lại
             if (document.getElementById('km_di').value !== '' && document.getElementById('km_ve').value !== '') {
                 if (kmVeVal < kmDiVal) {
-                    document.getElementById('km_ve').classList.add('input-error'); // Tô đỏ ô lỗi
-                    document.getElementById('km_ve').focus(); // Tự động trỏ chuột vào ô lỗi
+                    document.getElementById('km_ve').classList.add('input-error'); 
+                    document.getElementById('km_ve').focus(); 
                     showToast("Lỗi: Số km Về không được nhỏ hơn số km Đi!", "error");
-                    return; // Chặn không cho chạy tiếp lệnh lưu
+                    return; 
                 }
             }
             
             let year = ngayCapVal.split('-')[0]; 
 
-            if (!currentEditId) {
+            // CẤP SỐ PHIẾU THÔNG MINH: Cấp cho phiếu tạo mới HOẶC phiếu cũ chưa có số
+            if (!soPhieuVal) {
                 showLoader();
                 const { data: maxData, error: maxError } = await supabaseClient
                     .from('du_lieu')
@@ -942,6 +947,7 @@
                     const cb = document.getElementById('rem_' + input.id);
                     if (cb && cb.checked) { localStorage.setItem("draft_" + input.id, input.value); } else { localStorage.removeItem("draft_" + input.id); input.value = ''; }
                 });
+                document.getElementById('so_phieu').value = '';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
