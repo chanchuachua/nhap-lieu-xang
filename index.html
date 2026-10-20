@@ -814,10 +814,7 @@
             document.getElementById('ten_nv').value = item.ten_nv || ''; 
             document.getElementById('don_vi').value = item.don_vi || ''; 
             document.getElementById('bien_so').value = item.bien_so || ''; 
-            
-            // DÒNG BỊ THIẾU CẦN THÊM VÀO ĐÂY:
-            document.getElementById('so_phieu').value = item.so_phieu || ''; 
-            
+            document.getElementById('so_phieu').value = item.so_phieu || ''; // Điền số phiếu vào form
             document.getElementById('ngay_cap').value = item.ngay_cap || ''; 
             document.getElementById('lit_cap').value = item.lit_cap || ''; 
             document.getElementById('ngay_di').value = item.ngay_di || ''; 
@@ -829,11 +826,13 @@
             document.getElementById('so_ptt').value = item.so_ptt || ''; 
             document.getElementById('km_di').value = item.km_di || ''; 
             document.getElementById('km_ve').value = item.km_ve || ''; 
+            // document.getElementById('km_ht').value = item.km_ht || '';
         }
 
         function cloneRecord(id) {
-            const item = historyData.find(d => d.id === id); if(!item) return; fillForm(item);
-            document.getElementById('so_phieu').value = ''; // Rất quan trọng cho Clone
+            const item = historyData.find(d => d.id === id); if(!item) return; 
+            fillForm(item);
+            document.getElementById('so_phieu').value = ''; // XÓA SỐ PHIẾU NẾU LÀ CLONE
             currentEditId = null; loadedRecordId = id; const btnSave = document.getElementById('btn-save');
             btnSave.innerText = "Lưu Phiếu Mới"; btnSave.classList.remove('edit-mode-btn');
             document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
@@ -842,12 +841,14 @@
         }
 
         function editRecord(event, id) {
-            event.stopPropagation(); const item = historyData.find(d => d.id === id); if(!item) return; fillForm(item);
+            event.stopPropagation(); const item = historyData.find(d => d.id === id); if(!item) return; 
+            fillForm(item); // GIỮ NGUYÊN SỐ PHIẾU NẾU LÀ SỬA
             currentEditId = item.id; loadedRecordId = item.id; const btnSave = document.getElementById('btn-save');
             btnSave.innerText = "Cập Nhật Dữ Liệu"; btnSave.classList.add('edit-mode-btn');
             document.querySelectorAll('.edit-target').forEach(el => el.classList.add('edit-mode'));
             document.querySelectorAll('.remember-cb').forEach(el => el.classList.add('edit-mode'));
             showFormUIOnly(); document.getElementById('btn-inline-edit').classList.add('hidden'); document.getElementById('btn-inline-delete').classList.remove('hidden');
+            tinhToanQuangDuong(); // Tính toán lại số Km nếu có
         }
 
         // HÀM LƯU DỮ LIỆU ĐÃ TÍCH HỢP TỰ ĐỘNG CẤP SỐ PHIẾU
