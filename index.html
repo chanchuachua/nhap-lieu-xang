@@ -371,7 +371,19 @@
                     <label class="remember-cb"><input type="checkbox" id="rem_km_ve" checked> Ghi nhớ</label>
                 </div>
                 
-                <!-- TRẢ LẠI DÒNG KM HIỆN TRƯỜNG NHƯNG KHÓA CỨNG LẠI -->
+                <!-- BẢNG TỰ ĐỘNG TÍNH TOÁN (ĐƯỢC CHUYỂN LÊN TRÊN) -->
+                <div style="background-color: #f8f9fa; border: 1px dashed #1a73e8; border-radius: 8px; padding: 12px; margin-top: 15px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-weight: 600; font-size: 14px; color: #555;">Tổng quãng đường:</span>
+                        <span style="font-weight: bold; font-size: 15px; color: #1a73e8;"><span id="hien_thi_km">0</span> Km</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-weight: 600; font-size: 14px; color: #555;">Định mức tiêu hao (Km/40):</span>
+                        <span style="font-weight: bold; font-size: 15px; color: #d93025;"><span id="hien_thi_lit">0.0</span> Lít</span>
+                    </div>
+                </div>
+
+                <!-- TRẢ LẠI DÒNG KM HIỆN TRƯỜNG NHƯNG KHÓA CỨNG LẠI (ĐƯỢC CHUYỂN XUỐNG DƯỚI) -->
                 <label class="title">Số km hiện trường (Đã khóa):</label>
                 <div class="input-row">
                     <div class="input-wrapper">
@@ -381,6 +393,7 @@
                         <input type="checkbox" id="rem_km_ht" disabled> Ghi nhớ
                     </label>
                 </div>
+            </div>
                 
                 <!-- BẢNG TỰ ĐỘNG TÍNH TOÁN -->
                 <div style="background-color: #f8f9fa; border: 1px dashed #1a73e8; border-radius: 8px; padding: 12px; margin-top: 15px;">
