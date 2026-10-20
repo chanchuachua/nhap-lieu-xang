@@ -810,12 +810,14 @@
         }
 
         function fillForm(item) {
-            document.getElementById('ma_nv').value = item.ma_nv || ''; document.getElementById('ten_nv').value = item.ten_nv || ''; document.getElementById('don_vi').value = item.don_vi || ''; document.getElementById('bien_so').value = item.bien_so || ''; document.getElementById('so_phieu').value = item.so_phieu || ''; document.getElementById('ngay_cap').value = item.ngay_cap || ''; document.getElementById('lit_cap').value = item.lit_cap || ''; document.getElementById('ngay_di').value = item.ngay_di || ''; document.getElementById('noi_di').value = item.noi_di || ''; document.getElementById('noi_den').value = item.noi_den || ''; document.getElementById('noi_dung').value = item.noi_dung || ''; document.getElementById('so_lct').value = item.so_lct || ''; document.getElementById('so_pct').value = item.so_pct || ''; document.getElementById('so_ptt').value = item.so_ptt || ''; document.getElementById('km_di').value = item.km_di || ''; document.getElementById('km_ve').value = item.km_ve || ''; document.getElementById('km_ht').value = item.km_ht || '';
+            //... các lệnh điền khác
+            document.getElementById('so_phieu').value = item.so_phieu || ''; 
+            //...
         }
 
         function cloneRecord(id) {
             const item = historyData.find(d => d.id === id); if(!item) return; fillForm(item);
-            document.getElementById('so_phieu').value = ''; // Luôn rỗng để máy tạo số mới
+            document.getElementById('so_phieu').value = ''; // Rất quan trọng cho Clone
             currentEditId = null; loadedRecordId = id; const btnSave = document.getElementById('btn-save');
             btnSave.innerText = "Lưu Phiếu Mới"; btnSave.classList.remove('edit-mode-btn');
             document.querySelectorAll('.edit-target').forEach(el => el.classList.remove('edit-mode'));
