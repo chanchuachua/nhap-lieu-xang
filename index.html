@@ -15,6 +15,8 @@
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 12px; max-width: 550px; margin: auto; background-color: #f0f2f5; color: #333; }
             .hidden { display: none !important; }
             .group { background: #fff; border: 1px solid #e1e4e8; padding: 16px; margin-bottom: 16px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+
+            .input-error { border-color: #dc3545 !important; box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25) !important; background-color: #fff8f8 !important; }
             
             .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; flex-wrap: wrap; gap: 10px;}
             .group-header h3 { margin: 0; color: #1a73e8; font-size: 17px; transition: color 0.3s; }
@@ -794,13 +796,29 @@
             let soPhieuVal = document.getElementById('so_phieu').value;
             let ngayCapVal = document.getElementById('ngay_cap').value;
 
+            // Xóa cảnh báo đỏ (nếu có) trước khi kiểm tra lại
+            document.getElementById('km_ve').classList.remove('input-error');
+
             if (!ngayCapVal) {
                 showToast("Lỗi: Vui lòng nhập Ngày cấp NL trước!", "error"); return;
             }
             
-            let year = ngayCapVal.split('-')[0]; // Lấy năm từ ngày cấp NL
+            // --- KIỂM TRA LOGIC SỐ KM ---
+            let kmDiVal = parseFloat(document.getElementById('km_di').value) || 0;
+            let kmVeVal = parseFloat(document.getElementById('km_ve').value) || 0;
+            
+            // Nếu có nhập cả 2 số, mà số Về lại nhỏ hơn số Đi thì chặn lại
+            if (document.getElementById('km_di').value !== '' && document.getElementById('km_ve').value !== '') {
+                if (kmVeVal < kmDiVal) {
+                    document.getElementById('km_ve').classList.add('input-error'); // Tô đỏ ô lỗi
+                    document.getElementById('km_ve').focus(); // Tự động trỏ chuột vào ô lỗi
+                    showToast("Lỗi: Số km Về không được nhỏ hơn số km Đi!", "error");
+                    return; // Chặn không cho chạy tiếp lệnh lưu
+                }
+            }
+            
+            let year = ngayCapVal.split('-')[0]; 
 
-            // Tự động cấp số nếu là lưu mới
             if (!currentEditId) {
                 showLoader();
                 const { data: maxData, error: maxError } = await supabaseClient
