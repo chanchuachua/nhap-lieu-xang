@@ -310,6 +310,7 @@
                 <label class="title">Nơi đi: <span class="req">*</span></label>
                 <div class="input-row">
                     <div class="input-wrapper" style="position: relative;">
+                        <!-- ĐẢM BẢO id="noi_di" phải có ở thẻ input này -->
                         <input type="text" id="noi_di" class="data-input" placeholder="Chọn hoặc nhập nơi đi..." style="padding-right: 30px;">
                         <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; cursor: pointer; color: #555; pointer-events: none;">▼</span>
                         <select id="noi_di_select" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" onchange="if(this.value !== 'Khác...') document.getElementById('noi_di').value = this.value; this.value=''; document.getElementById('noi_di').focus();">
